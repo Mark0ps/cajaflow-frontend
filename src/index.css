@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+:root {
+  --surface-1: #f8fafc;
+  --surface-2: #ffffff;
+  --border: #e2e8f0;
+  --bg-accent: #1e293b;
+  --text-muted: #64748b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-1: #020617;
+    --surface-2: #0f172a;
+    --border: #334155;
+    --text-muted: #94a3b8;
+  }
+}
