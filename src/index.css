@@ -6,6 +6,13 @@
   --border: #e2e8f0;
   --bg-accent: #1e293b;
   --text-muted: #64748b;
+
+  /* Series de gráficos (paleta validada CVD sobre --surface-2, ver dataviz) */
+  --chart-1: #2a78d6;
+  --chart-2: #1baf7a;
+  --chart-3: #eda100;
+  --chart-grid: #e2e8f0;
+  --chart-ink: #64748b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -14,5 +21,11 @@
     --surface-2: #0f172a;
     --border: #334155;
     --text-muted: #94a3b8;
+
+    --chart-1: #3987e5;
+    --chart-2: #199e70;
+    --chart-3: #c98500;
+    --chart-grid: #334155;
+    --chart-ink: #94a3b8;
   }
 }

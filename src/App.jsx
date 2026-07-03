@@ -16,6 +16,7 @@ import CierresCajaListado from './pages/caja/CierresCajaListado';
 import CierreCajaDetalle from './pages/caja/CierreCajaDetalle';
 import FacturasPendientes from './pages/gastos/FacturasPendientes';
 import GastosExternos from './pages/gastos/GastosExternos';
+import Reportes from './pages/reportes/Reportes';
 
 function RaizPorRol() {
   const { user } = useAuth();
@@ -36,7 +37,7 @@ function RutasProtegidas() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/caja" element={<CierresCajaListado />} />
             <Route path="/caja/:id" element={<CierreCajaDetalle />} />
-            <Route path="/reportes" element={<Proximamente titulo="Reportes" />} />
+            <Route path="/reportes" element={<Reportes />} />
 
             <Route element={<ProtectedRoute roles={['admin']} />}>
               <Route path="/planillas" element={<PlanillasListado />} />
