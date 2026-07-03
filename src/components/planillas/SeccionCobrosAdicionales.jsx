@@ -1,0 +1,255 @@
+import { useState } from 'react';
+import api from '../../api/axios';
+import { extraerMensajeError } from '../../api/errores';
+import Modal from '../Modal';
+import NumberInput from '../common/NumberInput';
+import { IconEditar, IconEliminar, IconChevronDown } from '../icons';
+import { formatearMoneda, fechaLocalHoy } from '../../utils/moneda';
+
+const INPUT_CLASES =
+  'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
+
+function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
+  const editando = Boolean(compra);
+  const [fecha, setFecha] = useState(compra?.fecha ? String(compra.fecha).slice(0, 10) : fechaLocalHoy());
+  const [descripcion, setDescripcion] = useState(compra?.descripcion ?? '');
+  const [valor, setValor] = useState(compra ? String(compra.valor) : '');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setError('');
+    setSubmitting(true);
+
+    const payload = { fecha, descripcion: descripcion.trim() || null, valor };
+
+    try {
+      const { data } = editando
+        ? await api.patch(`/planillas/${planillaId}/detalles/${detalleId}/compras-tienda/${compra.id}`, payload)
+        : await api.post(`/planillas/${planillaId}/detalles/${detalleId}/compras-tienda`, payload);
+      onGuardado(data);
+    } catch (err) {
+      setError(extraerMensajeError(err));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {error && (
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
+      )}
+
+      <div className="mb-3 grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="fecha_cobro">
+            Fecha
+          </label>
+          <input
+            id="fecha_cobro"
+            type="date"
+            required
+            value={fecha}
+            onChange={(event) => setFecha(event.target.value)}
+            className={INPUT_CLASES}
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="valor_cobro">
+            Valor
+          </label>
+          <NumberInput
+            id="valor_cobro"
+            min="0.01"
+            step="0.01"
+            required
+            value={valor}
+            onChange={(event) => setValor(event.target.value)}
+            className="px-2 py-1.5"
+          />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="descripcion_cobro">
+          Descripción (opcional)
+        </label>
+        <input
+          id="descripcion_cobro"
+          type="text"
+          value={descripcion}
+          onChange={(event) => setDescripcion(event.target.value)}
+          className={INPUT_CLASES}
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600"
+        >
+          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Agregar cobro'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancelar}
+          disabled={submitting}
+          className="rounded-lg border-[0.5px] border-[var(--border)] px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/**
+ * Sección expandible dentro de la ficha de cada empleado. "Cobros
+ * adicionales" es el nombre visible; por dentro sigue siendo el CRUD de
+ * compras_tienda (también cubre correcciones por error, no solo compras a
+ * crédito en tienda).
+ */
+export default function SeccionCobrosAdicionales({ planillaId, detalle, editable, onDetalleActualizado }) {
+  const [abierto, setAbierto] = useState(false);
+  const [compras, setCompras] = useState(detalle.compras_tienda ?? []);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [eliminandoId, setEliminandoId] = useState(null);
+  const [error, setError] = useState('');
+
+  function abrirNuevo() {
+    setEditando(null);
+    setModalAbierto(true);
+  }
+
+  function abrirEditar(compra) {
+    setEditando(compra);
+    setModalAbierto(true);
+  }
+
+  function cerrarModal() {
+    setModalAbierto(false);
+    setEditando(null);
+  }
+
+  function handleGuardado({ compra, detalle: detalleNuevo }) {
+    setCompras((prev) => {
+      const existe = prev.some((item) => item.id === compra.id);
+      return existe ? prev.map((item) => (item.id === compra.id ? compra : item)) : [...prev, compra];
+    });
+    onDetalleActualizado(detalleNuevo);
+    cerrarModal();
+  }
+
+  async function handleEliminar(compra) {
+    if (!window.confirm('¿Eliminar este cobro adicional? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    setError('');
+    setEliminandoId(compra.id);
+
+    try {
+      const { data } = await api.delete(`/planillas/${planillaId}/detalles/${detalle.id}/compras-tienda/${compra.id}`);
+      setCompras((prev) => prev.filter((item) => item.id !== compra.id));
+      onDetalleActualizado(data.detalle);
+    } catch (err) {
+      setError(extraerMensajeError(err));
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
+  const total = compras.reduce((acumulado, compra) => acumulado + Number(compra.valor), 0);
+
+  return (
+    <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
+      <button
+        type="button"
+        onClick={() => setAbierto((prev) => !prev)}
+        className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+      >
+        <span>Cobros adicionales {compras.length > 0 && `(${compras.length})`}</span>
+        <span className="flex items-center gap-2">
+          {compras.length > 0 && (
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
+          )}
+          <IconChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+
+      {abierto && (
+        <div className="mt-2">
+          {error && (
+            <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
+          )}
+
+          {compras.length === 0 ? (
+            <p className="text-xs text-slate-400 dark:text-slate-500">Sin cobros adicionales registrados.</p>
+          ) : (
+            <ul className="divide-y-[0.5px] divide-[var(--border)]">
+              {compras.map((compra) => (
+                <li key={compra.id} className="flex items-center justify-between gap-2 py-1.5 text-xs">
+                  <div className="min-w-0">
+                    <p className="truncate text-slate-600 dark:text-slate-300">{compra.descripcion || 'Sin descripción'}</p>
+                    <p className="text-slate-400 dark:text-slate-500">{String(compra.fecha).slice(0, 10)}</p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{formatearMoneda(compra.valor)}</span>
+
+                    {editable && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => abrirEditar(compra)}
+                          aria-label="Editar cobro"
+                          className="rounded-md p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                          <IconEditar className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEliminar(compra)}
+                          disabled={eliminandoId === compra.id}
+                          aria-label="Eliminar cobro"
+                          className="rounded-md p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950"
+                        >
+                          <IconEliminar className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {editable && (
+            <button
+              type="button"
+              onClick={abrirNuevo}
+              className="mt-2 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              + Agregar cobro
+            </button>
+          )}
+        </div>
+      )}
+
+      <Modal open={modalAbierto} onClose={cerrarModal} title={editando ? 'Editar cobro adicional' : 'Agregar cobro adicional'}>
+        <FormCobro
+          planillaId={planillaId}
+          detalleId={detalle.id}
+          compra={editando}
+          onGuardado={handleGuardado}
+          onCancelar={cerrarModal}
+        />
+      </Modal>
+    </div>
+  );
+}
