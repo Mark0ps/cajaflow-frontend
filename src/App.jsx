@@ -12,6 +12,10 @@ import PlanillasListado from './pages/planillas/PlanillasListado';
 import PlanillaDetalle from './pages/planillas/PlanillaDetalle';
 import EmpleadosListado from './pages/empleados/EmpleadosListado';
 import EmpleadoDetalle from './pages/empleados/EmpleadoDetalle';
+import CierresCajaListado from './pages/caja/CierresCajaListado';
+import CierreCajaDetalle from './pages/caja/CierreCajaDetalle';
+import FacturasPendientes from './pages/gastos/FacturasPendientes';
+import GastosExternos from './pages/gastos/GastosExternos';
 
 function RaizPorRol() {
   const { user } = useAuth();
@@ -30,7 +34,8 @@ function RutasProtegidas() {
         <Route element={<ProtectedRoute roles={['admin', 'secretaria']} />}>
           <Route element={<AdminLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/caja" element={<MiCaja />} />
+            <Route path="/caja" element={<CierresCajaListado />} />
+            <Route path="/caja/:id" element={<CierreCajaDetalle />} />
             <Route path="/reportes" element={<Proximamente titulo="Reportes" />} />
 
             <Route element={<ProtectedRoute roles={['admin']} />}>
@@ -43,8 +48,8 @@ function RutasProtegidas() {
             </Route>
 
             <Route element={<ProtectedRoute roles={['secretaria']} />}>
-              <Route path="/facturas-pendientes" element={<Proximamente titulo="Facturas pendientes" />} />
-              <Route path="/gastos-externos" element={<Proximamente titulo="Gastos externos" />} />
+              <Route path="/facturas-pendientes" element={<FacturasPendientes />} />
+              <Route path="/gastos-externos" element={<GastosExternos />} />
             </Route>
           </Route>
         </Route>
