@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
-import { IconCamara, IconSubir } from '../icons';
+import { IconCamara, IconSubir, IconCheck } from '../icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
@@ -282,7 +282,10 @@ export default function EstadoCuentaTab({ empleadoId }) {
                     PDF
                   </span>
                 )}
-                <span className="truncate">{comprobante.name}</span>
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <IconCheck className="h-4 w-4" />
+                  Comprobante listo para subir
+                </span>
                 <button
                   type="button"
                   onClick={quitarComprobante}

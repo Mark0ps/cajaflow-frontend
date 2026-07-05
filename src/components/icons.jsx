@@ -109,6 +109,14 @@ export function IconEngranaje({ className }) {
   );
 }
 
+export function IconCheck({ className }) {
+  return (
+    <svg {...base({ className })}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 export function IconImprimir({ className }) {
   return (
     <svg {...base({ className })}>

@@ -7,7 +7,7 @@ import { extraerMensajeError } from '../../api/errores';
  * Admin edita/elimina algo de un cierre de caja que ya no está abierto
  * (CierreCajaService lo exige y lo guarda en `historial`).
  */
-export default function ModalMotivo({ open, onClose, title = 'Motivo del cambio', mensaje, onConfirmar }) {
+export default function ModalMotivo({ open, onClose, title = 'Motivo del cambio', mensaje, onConfirmar, children }) {
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [procesando, setProcesando] = useState(false);
@@ -47,6 +47,8 @@ export default function ModalMotivo({ open, onClose, title = 'Motivo del cambio'
         <p className="mb-3 text-xs text-[var(--text-muted)]">
           {mensaje ?? 'Este cierre ya no está abierto. Indica el motivo de la corrección para dejar rastro en el historial.'}
         </p>
+
+        {children}
 
         {error && (
           <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>

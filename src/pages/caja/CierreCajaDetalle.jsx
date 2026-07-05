@@ -192,7 +192,7 @@ export default function CierreCajaDetalle() {
                 requerirMotivo={requerirMotivo}
                 onGuardado={refrescar}
               />
-              <SeccionMovimientosEfectivo cierre={cierre} editable onGuardado={refrescar} />
+              <SeccionMovimientosEfectivo cierre={cierre} editable requerirMotivo={requerirMotivo} onGuardado={refrescar} />
             </>
           ) : (
             <>

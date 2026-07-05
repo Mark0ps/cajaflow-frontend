@@ -3,7 +3,7 @@ import api from '../../api/axios';
 import Modal from '../Modal';
 import ModalMotivo from '../common/ModalMotivo';
 import FormMovimientoEfectivo from './FormMovimientoEfectivo';
-import { IconChevronDown, IconEliminar } from '../icons';
+import { IconChevronDown, IconEditar, IconEliminar } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
 
 const TIPO_ETIQUETAS = { entrada: 'Entrada', salida: 'Salida' };
@@ -13,12 +13,15 @@ const TIPO_ETIQUETAS = { entrada: 'Entrada', salida: 'Salida' };
  * Food durante el turno (exceso retirado, fondo adicional, venta de aceite
  * quemado, etc). El motivo es obligatorio siempre en el backend, así que la
  * eliminación siempre pasa por ModalMotivo, sin importar si el cierre sigue
- * abierto.
+ * abierto. La edición reutiliza el mismo formulario del alta; si el cierre ya
+ * no está abierto (requerirMotivo, Admin), el form pide además el motivo de
+ * la edición — mismo patrón que gastos/vales.
  */
-export default function SeccionMovimientosEfectivo({ cierre, editable, onGuardado }) {
+export default function SeccionMovimientosEfectivo({ cierre, editable, requerirMotivo = false, onGuardado }) {
   const movimientos = cierre.movimientos_efectivo ?? [];
   const [abierto, setAbierto] = useState(false);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [movimientoAEditar, setMovimientoAEditar] = useState(null);
   const [movimientoAEliminar, setMovimientoAEliminar] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
 
@@ -102,15 +105,28 @@ export default function SeccionMovimientosEfectivo({ cierre, editable, onGuardad
                     </span>
 
                     {editable && (
-                      <button
-                        type="button"
-                        onClick={() => setMovimientoAEliminar(movimiento)}
-                        disabled={eliminandoId === movimiento.id}
-                        aria-label="Eliminar movimiento"
-                        className="rounded-md bg-slate-100 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950"
-                      >
-                        <IconEliminar className="h-4 w-4" />
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMovimientoAEditar(movimiento);
+                            setModalAbierto(true);
+                          }}
+                          aria-label="Editar movimiento"
+                          className="rounded-md bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        >
+                          <IconEditar className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMovimientoAEliminar(movimiento)}
+                          disabled={eliminandoId === movimiento.id}
+                          aria-label="Eliminar movimiento"
+                          className="rounded-md bg-slate-100 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-50 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-red-950"
+                        >
+                          <IconEliminar className="h-4 w-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 </li>
@@ -130,11 +146,23 @@ export default function SeccionMovimientosEfectivo({ cierre, editable, onGuardad
         </div>
       )}
 
-      <Modal open={modalAbierto} onClose={() => setModalAbierto(false)} title="Agregar movimiento de efectivo">
+      <Modal
+        open={modalAbierto}
+        onClose={() => {
+          setModalAbierto(false);
+          setMovimientoAEditar(null);
+        }}
+        title={movimientoAEditar ? 'Editar movimiento de efectivo' : 'Agregar movimiento de efectivo'}
+      >
         <FormMovimientoEfectivo
           cierreId={cierre.id}
+          movimiento={movimientoAEditar}
+          requerirMotivoEdicion={requerirMotivo}
           onGuardado={onGuardado}
-          onCancelar={() => setModalAbierto(false)}
+          onCancelar={() => {
+            setModalAbierto(false);
+            setMovimientoAEditar(null);
+          }}
         />
       </Modal>
 

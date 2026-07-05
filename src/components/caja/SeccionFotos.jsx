@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import ModalMotivo from '../common/ModalMotivo';
+import LightboxFoto from '../common/LightboxFoto';
 import { IconCamara, IconSubir, IconEliminar } from '../icons';
 
 /**
@@ -14,14 +15,36 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
   const inputCamaraRef = useRef(null);
   const inputArchivoRef = useRef(null);
 
-  const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState('');
   const [fotoAEliminar, setFotoAEliminar] = useState(null);
+  const [fotoAmpliada, setFotoAmpliada] = useState(null);
+
+  // Un solo archivo "en preview" a la vez: o está esperando el motivo
+  // (cierre ya no abierto) o subiéndose de una — nunca ambos. Se muestra como
+  // miniatura (URL.createObjectURL) en vez del nombre real del archivo (que
+  // en móvil suele ser algo largo tipo IMG_20260705_114523.jpg), mismo
+  // criterio que el comprobante de pago en Estado de Cuenta.
   const [archivoPendiente, setArchivoPendiente] = useState(null);
+  const [archivoSubiendo, setArchivoSubiendo] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const archivoEnPreview = archivoPendiente ?? archivoSubiendo;
+
+  useEffect(() => {
+    if (!archivoEnPreview) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(archivoEnPreview);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [archivoEnPreview]);
 
   async function subirArchivo(file, motivo) {
     setError('');
-    setSubiendo(true);
+    setArchivoSubiendo(file);
 
     const formData = new FormData();
     formData.append('foto', file);
@@ -36,7 +59,7 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
       setError(extraerMensajeError(err));
       throw err;
     } finally {
-      setSubiendo(false);
+      setArchivoSubiendo(null);
     }
   }
 
@@ -77,6 +100,8 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
     await api.delete(`/cierres-caja/${cierre.id}/fotos/${fotoAEliminar.id}`, { data: { motivo } });
     await onGuardado();
   }
+
+  const subiendo = Boolean(archivoSubiendo);
 
   return (
     <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
@@ -127,7 +152,12 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
             </button>
           </div>
 
-          {subiendo && <p className="mb-2 text-xs text-slate-400 dark:text-slate-500">Subiendo...</p>}
+          {subiendo && previewUrl && (
+            <div className="mb-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <img src={previewUrl} alt="Vista previa" className="h-10 w-10 rounded border border-slate-200 object-cover dark:border-slate-700" />
+              Subiendo...
+            </div>
+          )}
         </>
       )}
 
@@ -140,9 +170,9 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
               key={foto.id}
               className="group relative overflow-hidden rounded-lg border-[0.5px] border-[var(--border)]"
             >
-              <a href={foto.url} target="_blank" rel="noreferrer">
+              <button type="button" onClick={() => setFotoAmpliada(foto)} className="block h-24 w-full">
                 <img src={foto.url} alt={foto.descripcion ?? 'Foto del turno'} className="h-24 w-full object-cover" />
-              </a>
+              </button>
               {editable && (
                 <button
                   type="button"
@@ -172,9 +202,22 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
         title="Subir foto"
         mensaje="Este cierre ya no está abierto. Indica el motivo para agregar esta foto."
         onConfirmar={async (motivo) => {
+          // Solo se limpia archivoPendiente si subirArchivo tiene éxito — si
+          // falla (re-lanza el error), el modal se queda abierto con la
+          // misma vista previa para poder reintentar sin re-elegir el archivo.
           await subirArchivo(archivoPendiente, motivo);
           setArchivoPendiente(null);
         }}
+      >
+        {previewUrl && archivoPendiente && (
+          <img src={previewUrl} alt="Vista previa" className="mb-3 h-20 w-20 rounded border border-slate-200 object-cover dark:border-slate-700" />
+        )}
+      </ModalMotivo>
+
+      <LightboxFoto
+        src={fotoAmpliada?.url}
+        alt={fotoAmpliada?.descripcion ?? 'Foto del turno'}
+        onClose={() => setFotoAmpliada(null)}
       />
     </section>
   );
