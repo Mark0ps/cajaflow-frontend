@@ -3,13 +3,15 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import FormGasto from './FormGasto';
 import Modal from '../Modal';
+import ModalMotivo from '../common/ModalMotivo';
 import { IconEditar, IconEliminar } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
 
-export default function SeccionGastos({ cierre, editable, onGuardado }) {
+export default function SeccionGastos({ cierre, editable, requerirMotivo = false, onGuardado }) {
   const gastos = cierre.gastos ?? [];
   const [modalAbierto, setModalAbierto] = useState(false);
   const [gastoEditando, setGastoEditando] = useState(null);
+  const [gastoAEliminar, setGastoAEliminar] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [error, setError] = useState('');
 
@@ -29,6 +31,11 @@ export default function SeccionGastos({ cierre, editable, onGuardado }) {
   }
 
   async function handleEliminar(gasto) {
+    if (requerirMotivo) {
+      setGastoAEliminar(gasto);
+      return;
+    }
+
     if (!window.confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.')) {
       return;
     }
@@ -46,8 +53,19 @@ export default function SeccionGastos({ cierre, editable, onGuardado }) {
     }
   }
 
+  async function confirmarEliminarConMotivo(motivo) {
+    setEliminandoId(gastoAEliminar.id);
+
+    try {
+      await api.delete(`/cierres-caja/${cierre.id}/gastos/${gastoAEliminar.id}`, { data: { motivo } });
+      await onGuardado();
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           Gastos {gastos.length > 0 && <span className="font-normal text-slate-400 dark:text-slate-500">({gastos.length})</span>}
@@ -120,8 +138,22 @@ export default function SeccionGastos({ cierre, editable, onGuardado }) {
       )}
 
       <Modal open={modalAbierto} onClose={cerrarModal} title={gastoEditando ? 'Editar gasto' : 'Agregar gasto'}>
-        <FormGasto cierreId={cierre.id} gasto={gastoEditando} onGuardado={onGuardado} onCancelar={cerrarModal} />
+        <FormGasto
+          cierreId={cierre.id}
+          gasto={gastoEditando}
+          requerirMotivo={requerirMotivo}
+          onGuardado={onGuardado}
+          onCancelar={cerrarModal}
+        />
       </Modal>
+
+      <ModalMotivo
+        open={Boolean(gastoAEliminar)}
+        onClose={() => setGastoAEliminar(null)}
+        title="Eliminar gasto"
+        mensaje="Este cierre ya no está abierto. Indica el motivo para eliminar este gasto."
+        onConfirmar={confirmarEliminarConMotivo}
+      />
     </section>
   );
 }

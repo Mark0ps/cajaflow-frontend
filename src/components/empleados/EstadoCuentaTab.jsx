@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
+import { IconCamara, IconSubir } from '../icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
@@ -20,6 +21,36 @@ export default function EstadoCuentaTab({ empleadoId }) {
   const [errorPago, setErrorPago] = useState('');
   const [exito, setExito] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const inputCamaraRef = useRef(null);
+  const inputArchivoRef = useRef(null);
+
+  // Dos inputs de archivo separados (cámara vs. galería/PDF): cuando el
+  // `accept` mezcla imágenes y PDF, los navegadores móviles esconden la
+  // opción de cámara y solo dejan elegir de archivos/galería. Ambos botones
+  // terminan seteando el mismo estado `comprobante`.
+  function handleArchivoSeleccionado(event) {
+    setComprobante(event.target.files?.[0] ?? null);
+  }
+
+  function quitarComprobante() {
+    setComprobante(null);
+    if (inputCamaraRef.current) inputCamaraRef.current.value = '';
+    if (inputArchivoRef.current) inputArchivoRef.current.value = '';
+  }
+
+  useEffect(() => {
+    if (!comprobante || !comprobante.type?.startsWith('image/')) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(comprobante);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [comprobante]);
 
   function cargar() {
     setLoading(true);
@@ -80,7 +111,7 @@ export default function EstadoCuentaTab({ empleadoId }) {
       setMontoTotal('');
       setFechaPago('');
       setMetodo('efectivo');
-      setComprobante(null);
+      quitarComprobante();
       setNotas('');
       cargar();
     } catch (err) {
@@ -197,16 +228,70 @@ export default function EstadoCuentaTab({ empleadoId }) {
           </div>
 
           <div className="mb-3">
-            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="comprobante_pago">
-              Comprobante (foto o PDF)
-            </label>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Comprobante (foto o PDF)</label>
+
+            {/* Ocultos: "Tomar foto" fuerza la cámara (capture="environment",
+                accept solo imagen); "Subir archivo" abre archivos/galería y
+                acepta también PDF. Mezclar accept image+pdf en un solo input
+                esconde la cámara en navegadores móviles — por eso van separados. */}
             <input
-              id="comprobante_pago"
+              ref={inputCamaraRef}
               type="file"
-              accept="image/*,.pdf"
-              onChange={(event) => setComprobante(event.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 dark:text-slate-300 dark:file:bg-slate-800 dark:file:text-slate-200 dark:hover:file:bg-slate-700"
+              accept="image/*"
+              capture="environment"
+              onChange={handleArchivoSeleccionado}
+              className="hidden"
             />
+            <input
+              ref={inputArchivoRef}
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={handleArchivoSeleccionado}
+              className="hidden"
+            />
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => inputCamaraRef.current?.click()}
+                className="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <IconCamara className="h-4 w-4" />
+                Tomar foto
+              </button>
+              <button
+                type="button"
+                onClick={() => inputArchivoRef.current?.click()}
+                className="flex items-center gap-1.5 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <IconSubir className="h-4 w-4" />
+                Subir archivo
+              </button>
+            </div>
+
+            {comprobante && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Vista previa del comprobante"
+                    className="h-12 w-12 rounded border border-slate-200 object-cover dark:border-slate-700"
+                  />
+                ) : (
+                  <span className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    PDF
+                  </span>
+                )}
+                <span className="truncate">{comprobante.name}</span>
+                <button
+                  type="button"
+                  onClick={quitarComprobante}
+                  className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                >
+                  Quitar
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mb-4">

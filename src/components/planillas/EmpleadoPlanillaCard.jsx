@@ -2,39 +2,42 @@ import { useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
-import SeccionCobrosAdicionales from './SeccionCobrosAdicionales';
+import SeccionComprasTienda from './SeccionComprasTienda';
+import SeccionLlegadasTarde from './SeccionLlegadasTarde';
+import SeccionPrestamo from './SeccionPrestamo';
+import ModalComprobante from './ModalComprobante';
+import { IconEngranaje, IconImprimir } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
 
 function redondear(valor) {
   return Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 }
 
-export default function EmpleadoPlanillaCard({ planillaId, detalle, editable, onActualizado }) {
+export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onActualizado }) {
   const [diasLaborados, setDiasLaborados] = useState(String(detalle.dias_laborados));
   const [horasCantidad, setHorasCantidad] = useState(String(detalle.horas_extras_cantidad));
-  const [multiplicador, setMultiplicador] = useState('1.5');
-  const [valorHoraExtra, setValorHoraExtra] = useState(
-    Number(detalle.valor_hora_extra) > 0 ? String(detalle.valor_hora_extra) : ''
-  );
   const [bonificaciones, setBonificaciones] = useState(String(detalle.bonificaciones));
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [modalMultiplicador, setModalMultiplicador] = useState(false);
+  const [modalComprobante, setModalComprobante] = useState(false);
 
-  const tarifaSugerida = redondear((Number(detalle.sueldo_diario) / 8) * (Number(multiplicador) || 0));
+  const tarifaBase = Number(detalle.sueldo_diario) / 8;
+  const [multiplicador, setMultiplicador] = useState(() => {
+    if (tarifaBase > 0 && Number(detalle.valor_hora_extra) > 0) {
+      return String(redondear(Number(detalle.valor_hora_extra) / tarifaBase));
+    }
+    return '1.5';
+  });
 
-  async function guardarCampo(campo, valorCrudo, valorOriginal) {
-    if (valorCrudo.trim() === '') return;
+  const tarifaSugerida = redondear(tarifaBase * (Number(multiplicador) || 0));
 
-    const valorNumerico = Number(valorCrudo);
-    if (Number.isNaN(valorNumerico) || valorNumerico === Number(valorOriginal)) return;
-
+  async function guardarCampo(payload) {
     setError('');
     setGuardando(true);
 
     try {
-      const { data } = await api.patch(`/planillas/${planillaId}/detalles/${detalle.id}`, {
-        [campo]: valorNumerico,
-      });
+      const { data } = await api.patch(`/planillas/${planilla.id}/detalles/${detalle.id}`, payload);
       onActualizado(data.detalle);
     } catch (err) {
       setError(extraerMensajeError(err));
@@ -43,10 +46,38 @@ export default function EmpleadoPlanillaCard({ planillaId, detalle, editable, on
     }
   }
 
-  function usarTarifaSugerida() {
-    const valor = String(tarifaSugerida);
-    setValorHoraExtra(valor);
-    guardarCampo('valor_hora_extra', valor, detalle.valor_hora_extra);
+  function guardarDias() {
+    const valorNumerico = Number(diasLaborados);
+    if (diasLaborados.trim() === '' || Number.isNaN(valorNumerico) || valorNumerico === Number(detalle.dias_laborados)) return;
+    guardarCampo({ dias_laborados: valorNumerico });
+  }
+
+  function guardarBonificaciones() {
+    const valorNumerico = Number(bonificaciones);
+    if (bonificaciones.trim() === '' || Number.isNaN(valorNumerico) || valorNumerico === Number(detalle.bonificaciones)) return;
+    guardarCampo({ bonificaciones: valorNumerico });
+  }
+
+  function guardarHorasExtra(cantidadCruda) {
+    const cantidad = Number(cantidadCruda);
+    if (cantidadCruda.trim() === '' || Number.isNaN(cantidad)) return;
+
+    const valorHoraExtra = tarifaSugerida;
+    const horasExtrasValor = redondear(cantidad * valorHoraExtra);
+
+    if (
+      cantidad === Number(detalle.horas_extras_cantidad) &&
+      valorHoraExtra === Number(detalle.valor_hora_extra) &&
+      horasExtrasValor === Number(detalle.horas_extras_valor)
+    ) {
+      return;
+    }
+
+    guardarCampo({
+      horas_extras_cantidad: cantidad,
+      valor_hora_extra: valorHoraExtra,
+      horas_extras_valor: horasExtrasValor,
+    });
   }
 
   return (
@@ -86,117 +117,147 @@ export default function EmpleadoPlanillaCard({ planillaId, detalle, editable, on
           </div>
         </dl>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`dias_${detalle.id}`}>
-                Días laborados
-              </label>
-              <NumberInput
-                id={`dias_${detalle.id}`}
-                min="0"
-                max="31"
-                step="1"
-                value={diasLaborados}
-                onChange={(event) => setDiasLaborados(event.target.value)}
-                onBlur={() => guardarCampo('dias_laborados', diasLaborados, detalle.dias_laborados)}
-                disabled={guardando}
-                className="px-2 py-1.5"
-              />
-            </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`dias_${detalle.id}`}>
+              Días
+            </label>
+            <NumberInput
+              id={`dias_${detalle.id}`}
+              min="0"
+              max="31"
+              step="1"
+              value={diasLaborados}
+              onChange={(event) => setDiasLaborados(event.target.value)}
+              onBlur={guardarDias}
+              disabled={guardando}
+              className="px-2 py-1.5"
+            />
+          </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`horas_${detalle.id}`}>
+          <div>
+            <div className="mb-1 flex items-center gap-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`horas_${detalle.id}`}>
                 Horas extra
               </label>
-              <NumberInput
-                id={`horas_${detalle.id}`}
-                min="0"
-                step="0.5"
-                value={horasCantidad}
-                onChange={(event) => setHorasCantidad(event.target.value)}
-                onBlur={() => guardarCampo('horas_extras_cantidad', horasCantidad, detalle.horas_extras_cantidad)}
-                disabled={guardando}
-                className="px-2 py-1.5"
-              />
+              <button
+                type="button"
+                onClick={() => setModalMultiplicador((prev) => !prev)}
+                aria-label="Editar multiplicador de hora extra"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+              >
+                <IconEngranaje className="h-3.5 w-3.5" />
+              </button>
             </div>
+            <NumberInput
+              id={`horas_${detalle.id}`}
+              min="0"
+              step="0.5"
+              value={horasCantidad}
+              onChange={(event) => setHorasCantidad(event.target.value)}
+              onBlur={() => guardarHorasExtra(horasCantidad)}
+              disabled={guardando}
+              className="px-2 py-1.5"
+            />
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              {multiplicador || 0}× = {formatearMoneda(detalle.horas_extras_valor)}
+            </p>
 
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`multiplicador_${detalle.id}`}>
-                Multiplicador
-              </label>
-              <NumberInput
-                id={`multiplicador_${detalle.id}`}
-                min="0"
-                step="0.1"
-                value={multiplicador}
-                onChange={(event) => setMultiplicador(event.target.value)}
-                disabled={guardando}
-                className="px-2 py-1.5"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`bonif_${detalle.id}`}>
-                Bonificaciones
-              </label>
-              <NumberInput
-                id={`bonif_${detalle.id}`}
-                min="0"
-                step="0.01"
-                value={bonificaciones}
-                onChange={(event) => setBonificaciones(event.target.value)}
-                onBlur={() => guardarCampo('bonificaciones', bonificaciones, detalle.bonificaciones)}
-                disabled={guardando}
-                className="px-2 py-1.5"
-              />
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
-            <div className="min-w-[140px] flex-1">
-              <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`valor_hora_${detalle.id}`}>
-                Valor por hora extra
-              </label>
-              <NumberInput
-                id={`valor_hora_${detalle.id}`}
-                min="0"
-                step="0.01"
-                placeholder={String(tarifaSugerida)}
-                value={valorHoraExtra}
-                onChange={(event) => setValorHoraExtra(event.target.value)}
-                onBlur={() => guardarCampo('valor_hora_extra', valorHoraExtra, detalle.valor_hora_extra)}
-                disabled={guardando}
-                className="px-2 py-1.5"
-              />
-            </div>
-
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Tarifa sugerida ({multiplicador || 0}×): {' '}
-              <span className="font-medium text-slate-700 dark:text-slate-300">{formatearMoneda(tarifaSugerida)}</span>
-              {valorHoraExtra === '' && (
-                <button
-                  type="button"
-                  onClick={usarTarifaSugerida}
-                  className="ml-2 underline decoration-dotted hover:text-slate-800 dark:hover:text-slate-100"
+            {modalMultiplicador && (
+              <div className="mt-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/60">
+                <label
+                  className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400"
+                  htmlFor={`multiplicador_${detalle.id}`}
                 >
-                  Usar sugerida
-                </button>
-              )}
-            </p>
-
-            <p className="ml-auto text-sm font-semibold text-slate-700 dark:text-slate-200">
-              = {formatearMoneda(detalle.horas_extras_valor)}
-            </p>
+                  Multiplicador
+                </label>
+                <NumberInput
+                  id={`multiplicador_${detalle.id}`}
+                  min="0"
+                  step="0.1"
+                  value={multiplicador}
+                  onChange={(event) => setMultiplicador(event.target.value)}
+                  onBlur={() => guardarHorasExtra(horasCantidad)}
+                  disabled={guardando}
+                  className="px-2 py-1.5"
+                />
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  Tarifa: {formatearMoneda(tarifaSugerida)} /hora
+                </p>
+              </div>
+            )}
           </div>
-        </>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor={`bonif_${detalle.id}`}>
+              Bonificación
+            </label>
+            <NumberInput
+              id={`bonif_${detalle.id}`}
+              min="0"
+              step="0.01"
+              value={bonificaciones}
+              onChange={(event) => setBonificaciones(event.target.value)}
+              onBlur={guardarBonificaciones}
+              disabled={guardando}
+              className="px-2 py-1.5"
+            />
+          </div>
+        </div>
       )}
 
-      <SeccionCobrosAdicionales
-        planillaId={planillaId}
+      <SeccionComprasTienda
+        planillaId={planilla.id}
         detalle={detalle}
         editable={editable}
         onDetalleActualizado={onActualizado}
+        tipo="compra_credito"
+        titulo="Compras a crédito"
+        requiereMotivo={false}
+        textoVacio="Sin compras a crédito registradas."
+      />
+
+      <SeccionComprasTienda
+        planillaId={planilla.id}
+        detalle={detalle}
+        editable={editable}
+        onDetalleActualizado={onActualizado}
+        tipo="cobro_adicional"
+        titulo="Cobros adicionales"
+        requiereMotivo
+        textoVacio="Sin cobros adicionales registrados."
+      />
+
+      <SeccionLlegadasTarde
+        planillaId={planilla.id}
+        detalle={detalle}
+        editable={editable}
+        onDetalleActualizado={onActualizado}
+      />
+
+      <SeccionPrestamo
+        planillaId={planilla.id}
+        detalle={detalle}
+        editable={editable}
+        onDetalleActualizado={onActualizado}
+      />
+
+      <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
+        <button
+          type="button"
+          onClick={() => setModalComprobante(true)}
+          className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <IconImprimir className="h-3.5 w-3.5" />
+          Ver / imprimir comprobante
+        </button>
+      </div>
+
+      <ModalComprobante
+        open={modalComprobante}
+        onClose={() => setModalComprobante(false)}
+        planilla={planilla}
+        detalle={detalle}
       />
     </div>
   );

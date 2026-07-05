@@ -40,6 +40,10 @@ function RutasProtegidas() {
             <Route path="/reportes" element={<Reportes />} />
 
             <Route element={<ProtectedRoute roles={['admin']} />}>
+              {/* Ruta distinta de /mi-caja (exclusiva del cajero) para evitar
+                  ambigüedad de path duplicado en el árbol de rutas; mismo
+                  componente, Admin puede abrir/trabajar su propio turno. */}
+              <Route path="/mi-turno" element={<MiCaja />} />
               <Route path="/planillas" element={<PlanillasListado />} />
               <Route path="/planillas/:id" element={<PlanillaDetalle />} />
               <Route path="/prestamos" element={<Proximamente titulo="Préstamos" />} />

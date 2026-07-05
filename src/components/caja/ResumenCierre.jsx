@@ -38,11 +38,13 @@ export default function ResumenCierre({ cierre, editable, onGuardado }) {
   const efectivo = Number(cierre.efectivo ?? 0);
   const totalGastos = Number(cierre.total_gastos ?? 0);
   const totalVales = Number(cierre.total_vales ?? 0);
+  const totalSalidas = Number(cierre.total_salidas ?? 0);
+  const totalEntradas = Number(cierre.total_entradas ?? 0);
   const tarjeta = Number(cierre.tarjeta_credito ?? 0);
   const transferencia = Number(cierre.transferencia ?? 0);
   const diferencia = Number(cierre.diferencia ?? 0);
 
-  const ventaEfectivoReconstruida = efectivo + totalGastos + totalVales;
+  const ventaEfectivoReconstruida = efectivo + totalGastos + totalVales + totalSalidas - totalEntradas;
   const totalVentaSegunCaja = ventaEfectivoReconstruida + tarjeta + transferencia;
 
   const diferenciaEstilo =
@@ -73,7 +75,7 @@ export default function ResumenCierre({ cierre, editable, onGuardado }) {
   }
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
       <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Resumen del cierre</h2>
 
       {error && (
@@ -84,6 +86,8 @@ export default function ResumenCierre({ cierre, editable, onGuardado }) {
         <FilaDesglose label="Efectivo en caja" valor={efectivo} />
         <FilaDesglose operador="+" label="Gastos" valor={totalGastos} />
         <FilaDesglose operador="+" label="Vales" valor={totalVales} />
+        <FilaDesglose operador="+" label="Salidas" valor={totalSalidas} />
+        <FilaDesglose operador="-" label="Entradas" valor={totalEntradas} />
         <FilaDesglose
           operador="="
           label="Venta efectivo"

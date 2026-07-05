@@ -127,8 +127,8 @@ export default function PlanillaDetalle() {
     cargar();
   }, [id]);
 
-  // El backend devuelve el detalle sin relaciones al guardar un campo;
-  // se hace merge para no perder empleado/compras_tienda ya cargados.
+  // El backend no re-carga la relación "empleado" al guardar un campo;
+  // se hace merge para no perderla (compras_tienda/prestamo_abonos sí vienen frescos).
   function handleActualizado(detalleNuevo) {
     setPlanilla((prev) => ({
       ...prev,
@@ -166,7 +166,7 @@ export default function PlanillaDetalle() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-7xl">
       <div className="sticky top-0 z-10 -mx-1 mb-4 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -225,11 +225,11 @@ export default function PlanillaDetalle() {
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(380px,1fr))] gap-3.5">
         {planilla.detalles.map((detalle) => (
           <EmpleadoPlanillaCard
             key={detalle.id}
-            planillaId={planilla.id}
+            planilla={planilla}
             detalle={detalle}
             editable={editable}
             onActualizado={handleActualizado}

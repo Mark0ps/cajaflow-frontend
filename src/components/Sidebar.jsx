@@ -13,6 +13,7 @@ import {
   faChartBar,
   faFileInvoice,
   faMoneyBillTransfer,
+  faWallet,
   faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,6 +21,7 @@ const NAV_POR_ROL = {
   admin: [
     { ruta: '/dashboard', icon: faGaugeHigh, label: 'Dashboard' },
     { ruta: '/caja', icon: faCashRegister, label: 'Caja diaria' },
+    { ruta: '/mi-turno', icon: faWallet, label: 'Mi turno' },
     { ruta: '/planillas', icon: faFileInvoiceDollar, label: 'Planillas' },
     { ruta: '/prestamos', icon: faHandHoldingDollar, label: 'Préstamos' },
     { ruta: '/empleados', icon: faUsers, label: 'Empleados' },

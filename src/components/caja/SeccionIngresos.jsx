@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
+import ModalMotivo from '../common/ModalMotivo';
 
 const CAMPOS = [
   {
@@ -14,10 +15,11 @@ const CAMPOS = [
   { name: 'venta_sistema_a2', label: 'Venta sistema A2 Food' },
 ];
 
-export default function SeccionIngresos({ cierre, editable, onGuardado }) {
+export default function SeccionIngresos({ cierre, editable, requerirMotivo = false, onGuardado }) {
   const [valores, setValores] = useState({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [modalMotivoAbierto, setModalMotivoAbierto] = useState(false);
 
   useEffect(() => {
     setValores({
@@ -32,7 +34,7 @@ export default function SeccionIngresos({ cierre, editable, onGuardado }) {
     setValores((actual) => ({ ...actual, [name]: value }));
   }
 
-  async function guardar() {
+  async function guardar(motivo) {
     setError('');
     setGuardando(true);
 
@@ -42,17 +44,26 @@ export default function SeccionIngresos({ cierre, editable, onGuardado }) {
         tarjeta_credito: valores.tarjeta_credito || 0,
         transferencia: valores.transferencia || 0,
         venta_sistema_a2: valores.venta_sistema_a2 === '' ? null : valores.venta_sistema_a2,
+        ...(motivo ? { motivo } : {}),
       });
       await onGuardado();
     } catch (err) {
       setError(extraerMensajeError(err));
+      throw err;
     } finally {
       setGuardando(false);
     }
   }
 
+  function handleBlur() {
+    // Con motivo obligatorio, se guarda solo con el botón explícito de abajo
+    // (no se puede pedir el motivo en cada blur de cada campo).
+    if (requerirMotivo) return;
+    guardar();
+  }
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
       <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Ingresos del turno</h2>
 
       {error && (
@@ -81,14 +92,33 @@ export default function SeccionIngresos({ cierre, editable, onGuardado }) {
               disabled={!editable}
               value={valores[campo.name] ?? ''}
               onChange={(event) => handleChange(campo.name, event.target.value)}
-              onBlur={guardar}
+              onBlur={handleBlur}
               className="px-2 py-1.5 disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
             />
           </div>
         ))}
       </div>
 
+      {requerirMotivo && (
+        <button
+          type="button"
+          onClick={() => setModalMotivoAbierto(true)}
+          disabled={guardando}
+          className="mt-3 rounded bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600"
+        >
+          Guardar cambios (requiere motivo)
+        </button>
+      )}
+
       {guardando && <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">Guardando...</p>}
+
+      <ModalMotivo
+        open={modalMotivoAbierto}
+        onClose={() => setModalMotivoAbierto(false)}
+        title="Editar ingresos"
+        mensaje="Este cierre ya no está abierto. Indica el motivo de la corrección."
+        onConfirmar={(motivo) => guardar(motivo)}
+      />
     </section>
   );
 }

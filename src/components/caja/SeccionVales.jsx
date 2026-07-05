@@ -3,13 +3,15 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import FormVale from './FormVale';
 import Modal from '../Modal';
+import ModalMotivo from '../common/ModalMotivo';
 import { IconEditar, IconEliminar } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
 
-export default function SeccionVales({ cierre, empleados, editable, onGuardado }) {
+export default function SeccionVales({ cierre, empleados, editable, requerirMotivo = false, onGuardado }) {
   const vales = cierre.vales ?? [];
   const [modalAbierto, setModalAbierto] = useState(false);
   const [valeEditando, setValeEditando] = useState(null);
+  const [valeAEliminar, setValeAEliminar] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [error, setError] = useState('');
 
@@ -29,6 +31,11 @@ export default function SeccionVales({ cierre, empleados, editable, onGuardado }
   }
 
   async function handleEliminar(vale) {
+    if (requerirMotivo) {
+      setValeAEliminar(vale);
+      return;
+    }
+
     if (!window.confirm('¿Eliminar este vale? Esta acción no se puede deshacer.')) {
       return;
     }
@@ -46,8 +53,19 @@ export default function SeccionVales({ cierre, empleados, editable, onGuardado }
     }
   }
 
+  async function confirmarEliminarConMotivo(motivo) {
+    setEliminandoId(valeAEliminar.id);
+
+    try {
+      await api.delete(`/cierres-caja/${cierre.id}/vales/${valeAEliminar.id}`, { data: { motivo } });
+      await onGuardado();
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           Vales {vales.length > 0 && <span className="font-normal text-slate-400 dark:text-slate-500">({vales.length})</span>}
@@ -119,10 +137,19 @@ export default function SeccionVales({ cierre, empleados, editable, onGuardado }
           cierreId={cierre.id}
           empleados={empleados}
           vale={valeEditando}
+          requerirMotivo={requerirMotivo}
           onGuardado={onGuardado}
           onCancelar={cerrarModal}
         />
       </Modal>
+
+      <ModalMotivo
+        open={Boolean(valeAEliminar)}
+        onClose={() => setValeAEliminar(null)}
+        title="Eliminar vale"
+        mensaje="Este cierre ya no está abierto. Indica el motivo para eliminar este vale."
+        onConfirmar={confirmarEliminarConMotivo}
+      />
     </section>
   );
 }

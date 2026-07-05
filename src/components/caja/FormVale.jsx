@@ -3,12 +3,13 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
 
-export default function FormVale({ cierreId, empleados, vale = null, onGuardado, onCancelar }) {
+export default function FormVale({ cierreId, empleados, vale = null, requerirMotivo = false, onGuardado, onCancelar }) {
   const editando = Boolean(vale);
 
   const [empleadoId, setEmpleadoId] = useState('');
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,6 +32,11 @@ export default function FormVale({ cierreId, empleados, vale = null, onGuardado,
       return;
     }
 
+    if (requerirMotivo && motivo.trim() === '') {
+      setError('El motivo es obligatorio: este cierre ya no está abierto.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -39,12 +45,14 @@ export default function FormVale({ cierreId, empleados, vale = null, onGuardado,
           empleado_id: empleadoId,
           monto,
           descripcion: descripcion || null,
+          ...(requerirMotivo ? { motivo: motivo.trim() } : {}),
         });
       } else {
         await api.post(`/cierres-caja/${cierreId}/vales`, {
           empleado_id: empleadoId,
           monto,
           descripcion: descripcion || null,
+          ...(requerirMotivo ? { motivo: motivo.trim() } : {}),
         });
       }
       await onGuardado();
@@ -111,6 +119,21 @@ export default function FormVale({ cierreId, empleados, vale = null, onGuardado,
           />
         </div>
       </div>
+
+      {requerirMotivo && (
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="motivo_vale">
+            Motivo (obligatorio: el cierre ya no está abierto)
+          </label>
+          <textarea
+            id="motivo_vale"
+            rows={2}
+            value={motivo}
+            onChange={(event) => setMotivo(event.target.value)}
+            className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <button

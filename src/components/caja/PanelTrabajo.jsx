@@ -3,6 +3,10 @@ import api from '../../api/axios';
 import SeccionIngresos from './SeccionIngresos';
 import SeccionGastos from './SeccionGastos';
 import SeccionVales from './SeccionVales';
+import SeccionMovimientosEfectivo from './SeccionMovimientosEfectivo';
+import SeccionObservaciones from './SeccionObservaciones';
+import SeccionFotos from './SeccionFotos';
+import BotonDescargarResumen from './BotonDescargarResumen';
 import ResumenCierre from './ResumenCierre';
 import ModalEmpleados from './ModalEmpleados';
 import { IconUsuarios } from '../icons';
@@ -30,7 +34,7 @@ export default function PanelTrabajo({ cierre, onGuardado, onReiniciar }) {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
@@ -62,6 +66,8 @@ export default function PanelTrabajo({ cierre, onGuardado, onReiniciar }) {
             Empleados en turno ({empleadosEnTurno.length})
           </button>
 
+          <BotonDescargarResumen cierre={cierre} />
+
           {!editable && (
             <button
               type="button"
@@ -79,6 +85,9 @@ export default function PanelTrabajo({ cierre, onGuardado, onReiniciar }) {
           <SeccionIngresos cierre={cierre} editable={editable} onGuardado={onGuardado} />
           <SeccionGastos cierre={cierre} editable={editable} onGuardado={onGuardado} />
           <SeccionVales cierre={cierre} empleados={empleados} editable={editable} onGuardado={onGuardado} />
+          <SeccionMovimientosEfectivo cierre={cierre} editable={editable} onGuardado={onGuardado} />
+          <SeccionObservaciones cierre={cierre} editable={editable} onGuardado={onGuardado} />
+          <SeccionFotos cierre={cierre} editable={editable} onGuardado={onGuardado} />
         </div>
 
         <div className="lg:sticky lg:top-4">

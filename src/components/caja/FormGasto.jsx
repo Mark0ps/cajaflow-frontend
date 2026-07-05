@@ -3,7 +3,7 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
 
-export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancelar }) {
+export default function FormGasto({ cierreId, gasto = null, requerirMotivo = false, onGuardado, onCancelar }) {
   const editando = Boolean(gasto);
 
   const [busqueda, setBusqueda] = useState('');
@@ -14,6 +14,7 @@ export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancel
   const [descripcion, setDescripcion] = useState('');
   const [numeroFactura, setNumeroFactura] = useState('');
   const [valor, setValor] = useState('');
+  const [motivo, setMotivo] = useState('');
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +82,11 @@ export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancel
       return;
     }
 
+    if (requerirMotivo && motivo.trim() === '') {
+      setError('El motivo es obligatorio: este cierre ya no está abierto.');
+      return;
+    }
+
     setSubmitting(true);
 
     const datosProveedor = proveedor.id
@@ -94,6 +100,7 @@ export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancel
           descripcion: descripcion || null,
           numero_factura: numeroFactura || null,
           valor,
+          ...(requerirMotivo ? { motivo: motivo.trim() } : {}),
         });
       } else {
         await api.post(`/cierres-caja/${cierreId}/gastos`, {
@@ -101,6 +108,7 @@ export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancel
           descripcion: descripcion || null,
           numero_factura: numeroFactura || null,
           valor,
+          ...(requerirMotivo ? { motivo: motivo.trim() } : {}),
         });
       }
       await onGuardado();
@@ -212,6 +220,21 @@ export default function FormGasto({ cierreId, gasto = null, onGuardado, onCancel
           />
         </div>
       </div>
+
+      {requerirMotivo && (
+        <div className="mb-3">
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="motivo_gasto">
+            Motivo (obligatorio: el cierre ya no está abierto)
+          </label>
+          <textarea
+            id="motivo_gasto"
+            rows={2}
+            value={motivo}
+            onChange={(event) => setMotivo(event.target.value)}
+            className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400"
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <button

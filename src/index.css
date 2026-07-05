@@ -15,6 +15,17 @@
   --chart-ink: #64748b;
 }
 
+/* Comprobante individual de planilla: la copia imprimible vive en un portal
+   fuera de #root (ver ModalComprobante.jsx), así que al imprimir basta con
+   ocultar toda la app. Con el patrón anterior (visibility:hidden en todo
+   el árbol) el documento oculto seguía ocupando varias páginas de alto, y
+   Chrome repetía el comprobante en cada una — ver CLAUDE.md. */
+@media print {
+  #root {
+    display: none !important;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --surface-1: #020617;

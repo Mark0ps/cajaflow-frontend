@@ -9,20 +9,33 @@ import { formatearMoneda, fechaLocalHoy } from '../../utils/moneda';
 const INPUT_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
 
-function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
+function FormCompra({ planillaId, detalleId, tipo, requiereMotivo, compra, onGuardado, onCancelar }) {
   const editando = Boolean(compra);
   const [fecha, setFecha] = useState(compra?.fecha ? String(compra.fecha).slice(0, 10) : fechaLocalHoy());
   const [descripcion, setDescripcion] = useState(compra?.descripcion ?? '');
   const [valor, setValor] = useState(compra ? String(compra.valor) : '');
+  const [motivo, setMotivo] = useState(compra?.motivo ?? '');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
+
+    if (requiereMotivo && !motivo.trim()) {
+      setError('El motivo es obligatorio para un cobro adicional.');
+      return;
+    }
+
     setSubmitting(true);
 
-    const payload = { fecha, descripcion: descripcion.trim() || null, valor };
+    const payload = {
+      tipo,
+      fecha,
+      descripcion: descripcion.trim() || null,
+      motivo: requiereMotivo ? motivo.trim() : null,
+      valor,
+    };
 
     try {
       const { data } = editando
@@ -44,11 +57,11 @@ function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
 
       <div className="mb-3 grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="fecha_cobro">
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="fecha_compra">
             Fecha
           </label>
           <input
-            id="fecha_cobro"
+            id="fecha_compra"
             type="date"
             required
             value={fecha}
@@ -58,11 +71,11 @@ function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="valor_cobro">
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="valor_compra">
             Valor
           </label>
           <NumberInput
-            id="valor_cobro"
+            id="valor_compra"
             min="0.01"
             step="0.01"
             required
@@ -73,12 +86,12 @@ function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
         </div>
       </div>
 
-      <div className="mb-4">
-        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="descripcion_cobro">
-          Descripción (opcional)
+      <div className="mb-3">
+        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="descripcion_compra">
+          Descripción {requiereMotivo ? '(opcional)' : ''}
         </label>
         <input
-          id="descripcion_cobro"
+          id="descripcion_compra"
           type="text"
           value={descripcion}
           onChange={(event) => setDescripcion(event.target.value)}
@@ -86,13 +99,29 @@ function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
         />
       </div>
 
+      {requiereMotivo && (
+        <div className="mb-4">
+          <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="motivo_compra">
+            Motivo <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="motivo_compra"
+            required
+            rows={2}
+            value={motivo}
+            onChange={(event) => setMotivo(event.target.value)}
+            className={INPUT_CLASES}
+          />
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <button
           type="submit"
           disabled={submitting}
           className="rounded-lg bg-slate-800 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600"
         >
-          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Agregar cobro'}
+          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Agregar'}
         </button>
         <button
           type="button"
@@ -108,18 +137,30 @@ function FormCobro({ planillaId, detalleId, compra, onGuardado, onCancelar }) {
 }
 
 /**
- * Sección expandible dentro de la ficha de cada empleado. "Cobros
- * adicionales" es el nombre visible; por dentro sigue siendo el CRUD de
- * compras_tienda (también cubre correcciones por error, no solo compras a
- * crédito en tienda).
+ * Widget colapsable de CRUD contra compras_tienda, parametrizado por tipo
+ * ("compra_credito" o "cobro_adicional"). Ambos widgets comparten la misma
+ * tabla y suman al mismo total_compras_tienda del detalle, pero se muestran
+ * como secciones separadas porque representan cosas distintas para el
+ * negocio (dato recurrente sin motivo vs. incidente puntual con motivo
+ * obligatorio).
  */
-export default function SeccionCobrosAdicionales({ planillaId, detalle, editable, onDetalleActualizado }) {
+export default function SeccionComprasTienda({
+  planillaId,
+  detalle,
+  editable,
+  onDetalleActualizado,
+  tipo,
+  titulo,
+  requiereMotivo,
+  textoVacio,
+}) {
   const [abierto, setAbierto] = useState(false);
-  const [compras, setCompras] = useState(detalle.compras_tienda ?? []);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [error, setError] = useState('');
+
+  const compras = (detalle.compras_tienda ?? []).filter((compra) => compra.tipo === tipo);
 
   function abrirNuevo() {
     setEditando(null);
@@ -136,17 +177,14 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
     setEditando(null);
   }
 
-  function handleGuardado({ compra, detalle: detalleNuevo }) {
-    setCompras((prev) => {
-      const existe = prev.some((item) => item.id === compra.id);
-      return existe ? prev.map((item) => (item.id === compra.id ? compra : item)) : [...prev, compra];
-    });
+  function handleGuardado({ detalle: detalleNuevo }) {
     onDetalleActualizado(detalleNuevo);
     cerrarModal();
   }
 
   async function handleEliminar(compra) {
-    if (!window.confirm('¿Eliminar este cobro adicional? Esta acción no se puede deshacer.')) {
+    const etiqueta = requiereMotivo ? 'este cobro adicional' : 'esta compra a crédito';
+    if (!window.confirm(`¿Eliminar ${etiqueta}? Esta acción no se puede deshacer.`)) {
       return;
     }
 
@@ -155,7 +193,6 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
 
     try {
       const { data } = await api.delete(`/planillas/${planillaId}/detalles/${detalle.id}/compras-tienda/${compra.id}`);
-      setCompras((prev) => prev.filter((item) => item.id !== compra.id));
       onDetalleActualizado(data.detalle);
     } catch (err) {
       setError(extraerMensajeError(err));
@@ -173,7 +210,7 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
         onClick={() => setAbierto((prev) => !prev)}
         className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
       >
-        <span>Cobros adicionales {compras.length > 0 && `(${compras.length})`}</span>
+        <span>{titulo} {compras.length > 0 && `(${compras.length})`}</span>
         <span className="flex items-center gap-2">
           {compras.length > 0 && (
             <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
@@ -189,13 +226,16 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
           )}
 
           {compras.length === 0 ? (
-            <p className="text-xs text-slate-400 dark:text-slate-500">Sin cobros adicionales registrados.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{textoVacio}</p>
           ) : (
             <ul className="divide-y-[0.5px] divide-[var(--border)]">
               {compras.map((compra) => (
                 <li key={compra.id} className="flex items-center justify-between gap-2 py-1.5 text-xs">
                   <div className="min-w-0">
                     <p className="truncate text-slate-600 dark:text-slate-300">{compra.descripcion || 'Sin descripción'}</p>
+                    {requiereMotivo && compra.motivo && (
+                      <p className="truncate text-slate-400 dark:text-slate-500">Motivo: {compra.motivo}</p>
+                    )}
                     <p className="text-slate-400 dark:text-slate-500">{String(compra.fecha).slice(0, 10)}</p>
                   </div>
 
@@ -207,7 +247,7 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
                         <button
                           type="button"
                           onClick={() => abrirEditar(compra)}
-                          aria-label="Editar cobro"
+                          aria-label="Editar"
                           className="rounded-md p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <IconEditar className="h-3.5 w-3.5" />
@@ -216,7 +256,7 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
                           type="button"
                           onClick={() => handleEliminar(compra)}
                           disabled={eliminandoId === compra.id}
-                          aria-label="Eliminar cobro"
+                          aria-label="Eliminar"
                           className="rounded-md p-1 text-red-500 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950"
                         >
                           <IconEliminar className="h-3.5 w-3.5" />
@@ -235,16 +275,18 @@ export default function SeccionCobrosAdicionales({ planillaId, detalle, editable
               onClick={abrirNuevo}
               className="mt-2 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              + Agregar cobro
+              + Agregar
             </button>
           )}
         </div>
       )}
 
-      <Modal open={modalAbierto} onClose={cerrarModal} title={editando ? 'Editar cobro adicional' : 'Agregar cobro adicional'}>
-        <FormCobro
+      <Modal open={modalAbierto} onClose={cerrarModal} title={editando ? `Editar ${titulo.toLowerCase()}` : `Agregar ${titulo.toLowerCase()}`}>
+        <FormCompra
           planillaId={planillaId}
           detalleId={detalle.id}
+          tipo={tipo}
+          requiereMotivo={requiereMotivo}
           compra={editando}
           onGuardado={handleGuardado}
           onCancelar={cerrarModal}

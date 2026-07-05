@@ -12,7 +12,11 @@ export default function MiCaja() {
     let activo = true;
 
     api
-      .get('/cierres-caja', { params: { estado: 'abierto' } })
+      // "mio=1" fuerza el filtro por el usuario autenticado sin importar el
+      // rol — sin esto, un Admin vería el primer cierre abierto de cualquier
+      // cajero (el backend solo auto-filtra por dueño cuando el rol es
+      // cajero).
+      .get('/cierres-caja', { params: { estado: 'abierto', mio: 1 } })
       .then(({ data }) => {
         const encontrado = data.data?.[0];
 
