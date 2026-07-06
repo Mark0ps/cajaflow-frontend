@@ -59,10 +59,14 @@ function ModalDia({ fecha, onClose }) {
                 </span>
               </div>
 
-              <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+              <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">Ingresos</dt>
                   <dd className="font-medium text-slate-700 dark:text-slate-200">{formatearMoneda(cierre.total_ingreso)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500 dark:text-slate-400">Venta total</dt>
+                  <dd className="font-medium text-slate-700 dark:text-slate-200">{formatearMoneda(cierre.total_venta)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-slate-500 dark:text-slate-400">Gastos ({cierre.gastos?.length ?? 0})</dt>
@@ -211,6 +215,9 @@ export default function Dashboard() {
                       <span className="mt-auto space-y-0.5">
                         <span className="block truncate text-[11px] font-semibold text-slate-800 dark:text-slate-100 sm:text-xs">
                           {formatearMoneda(dia.total_ingreso)}
+                        </span>
+                        <span className="hidden truncate text-[11px] text-slate-500 sm:block dark:text-slate-400">
+                          Venta {formatearMoneda(dia.total_venta)}
                         </span>
                         {dia.total_gastos > 0 && (
                           <span className="hidden truncate text-[11px] text-slate-500 sm:block dark:text-slate-400">

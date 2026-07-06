@@ -7,7 +7,6 @@ import AdminLayout from './layouts/AdminLayout';
 import CajeroLayout from './layouts/CajeroLayout';
 import Dashboard from './pages/dashboard/Dashboard';
 import MiCaja from './pages/caja/MiCaja';
-import Proximamente from './pages/Proximamente';
 import PlanillasListado from './pages/planillas/PlanillasListado';
 import PlanillaDetalle from './pages/planillas/PlanillaDetalle';
 import EmpleadosListado from './pages/empleados/EmpleadosListado';
@@ -20,6 +19,7 @@ import Reportes from './pages/reportes/Reportes';
 import AsignarVale from './pages/vales/AsignarVale';
 import PrestamosListado from './pages/prestamos/PrestamosListado';
 import UsuariosListado from './pages/usuarios/UsuariosListado';
+import ProveedoresListado from './pages/proveedores/ProveedoresListado';
 
 function RaizPorRol() {
   const { user } = useAuth();
@@ -53,7 +53,7 @@ function RutasProtegidas() {
               <Route path="/prestamos" element={<PrestamosListado />} />
               <Route path="/empleados" element={<EmpleadosListado />} />
               <Route path="/empleados/:id" element={<EmpleadoDetalle />} />
-              <Route path="/proveedores" element={<Proximamente titulo="Proveedores" />} />
+              <Route path="/proveedores" element={<ProveedoresListado />} />
               <Route path="/usuarios" element={<UsuariosListado />} />
             </Route>
 

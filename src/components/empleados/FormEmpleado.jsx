@@ -4,7 +4,7 @@ import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
 import { fechaLocalHoy } from '../../utils/moneda';
 
-const CARGOS = ['gerente', 'administrador', 'cajero_barista', 'cocinero', 'secretaria', 'seguridad', 'otro'];
+export const CARGOS = ['gerente', 'administrador', 'cajero_barista', 'cocinero', 'secretaria', 'seguridad', 'otro'];
 
 const INPUT_CLASES =
   'w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-slate-400';

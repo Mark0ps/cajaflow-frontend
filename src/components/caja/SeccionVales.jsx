@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import FormVale from './FormVale';
 import Modal from '../Modal';
+import ModalConfirmarPassword from '../common/ModalConfirmarPassword';
 import ModalMotivo from '../common/ModalMotivo';
 import { IconEditar, IconEliminar } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
@@ -12,6 +13,7 @@ export default function SeccionVales({ cierre, empleados, editable, requerirMoti
   const [modalAbierto, setModalAbierto] = useState(false);
   const [valeEditando, setValeEditando] = useState(null);
   const [valeAEliminar, setValeAEliminar] = useState(null);
+  const [valeParaForzar, setValeParaForzar] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
   const [error, setError] = useState('');
 
@@ -31,6 +33,11 @@ export default function SeccionVales({ cierre, empleados, editable, requerirMoti
   }
 
   async function handleEliminar(vale) {
+    if (vale.aplicado_en_planilla) {
+      setValeParaForzar(vale);
+      return;
+    }
+
     if (requerirMotivo) {
       setValeAEliminar(vale);
       return;
@@ -58,6 +65,17 @@ export default function SeccionVales({ cierre, empleados, editable, requerirMoti
 
     try {
       await api.delete(`/cierres-caja/${cierre.id}/vales/${valeAEliminar.id}`, { data: { motivo } });
+      await onGuardado();
+    } finally {
+      setEliminandoId(null);
+    }
+  }
+
+  async function confirmarForzarEliminar(password) {
+    setEliminandoId(valeParaForzar.id);
+
+    try {
+      await api.delete(`/cierres-caja/${cierre.id}/vales/${valeParaForzar.id}`, { data: { password } });
       await onGuardado();
     } finally {
       setEliminandoId(null);
@@ -149,6 +167,16 @@ export default function SeccionVales({ cierre, empleados, editable, requerirMoti
         title="Eliminar vale"
         mensaje="Este cierre ya no está abierto. Indica el motivo para eliminar este vale."
         onConfirmar={confirmarEliminarConMotivo}
+      />
+
+      <ModalConfirmarPassword
+        open={Boolean(valeParaForzar)}
+        onClose={() => setValeParaForzar(null)}
+        title="Eliminar vale aplicado a planilla"
+        mensaje="Este vale ya fue aplicado a una planilla en borrador. Al eliminarlo se restará su monto de las deducciones del empleado y se recalculará su total a pagar. Si la planilla ya está cerrada o el detalle ya tiene un pago, la eliminación seguirá bloqueada."
+        confirmLabel="Eliminar vale"
+        peligro
+        onConfirmar={confirmarForzarEliminar}
       />
     </section>
   );

@@ -78,6 +78,7 @@ export default function Reportes() {
   const [desde, setDesde] = useState(primerDiaDelMes());
   const [hasta, setHasta] = useState(hoyIso());
   const [agrupacion, setAgrupacion] = useState('diario');
+  const [facturaNominal, setFacturaNominal] = useState('');
 
   const [periodo, setPeriodo] = useState([]);
   const [metodoPago, setMetodoPago] = useState(null);
@@ -97,7 +98,7 @@ export default function Reportes() {
     Promise.all([
       api.get('/reportes/periodo', { params: { ...params, agrupacion } }),
       api.get('/reportes/metodo-pago', { params }),
-      api.get('/reportes/gastos-vs-ingresos', { params }),
+      api.get('/reportes/gastos-vs-ingresos', { params: { ...params, ...(facturaNominal ? { factura_nominal: facturaNominal } : {}) } }),
       api.get('/reportes/vales-por-empleado', { params }),
     ])
       .then(([resPeriodo, resMetodo, resBalance, resVales]) => {
@@ -108,7 +109,7 @@ export default function Reportes() {
       })
       .catch(() => setError('No se pudieron cargar los reportes.'))
       .finally(() => setLoading(false));
-  }, [desde, hasta, agrupacion]);
+  }, [desde, hasta, agrupacion, facturaNominal]);
 
   const datosMetodo = metodoPago
     ? [
@@ -162,6 +163,21 @@ export default function Reportes() {
               <option value="diario">Diario</option>
               <option value="semanal">Semanal</option>
               <option value="mensual">Mensual</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="reporte_factura_nominal">
+              Gastos con proveedor
+            </label>
+            <select
+              id="reporte_factura_nominal"
+              value={facturaNominal}
+              onChange={(event) => setFacturaNominal(event.target.value)}
+              className={INPUT_CLASES}
+            >
+              <option value="">Todos</option>
+              <option value="con">Con factura nominal</option>
+              <option value="sin">Sin factura nominal</option>
             </select>
           </div>
         </div>
