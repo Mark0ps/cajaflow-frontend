@@ -132,10 +132,10 @@ function BloqueFirmas({ compacto, pegarAlFondo }) {
   return (
     <div className={`flex flex-row gap-6 ${margen}`}>
       <div className="flex-1 text-center">
-        <div className="mb-1 border-t border-current pt-1">Firma del empleado</div>
+        <div className="mb-1 border-t border-current pt-1">Firma del administración</div>
       </div>
       <div className="flex-1 text-center">
-        <div className="mb-1 border-t border-current pt-1">Firma de administración</div>
+        <div className="mb-1 border-t border-current pt-1">Firma de empleado</div>
       </div>
     </div>
   );

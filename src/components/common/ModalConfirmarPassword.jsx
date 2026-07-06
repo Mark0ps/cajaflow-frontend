@@ -10,14 +10,26 @@ import Modal from '../Modal';
  * (que dispara la acción real, la cual también revalida la contraseña en el
  * backend).
  */
-export default function ModalConfirmarPassword({ open, onClose, title, mensaje, confirmLabel = 'Confirmar', peligro = false, onConfirmar }) {
+export default function ModalConfirmarPassword({
+  open,
+  onClose,
+  title,
+  mensaje,
+  confirmLabel = 'Confirmar',
+  peligro = false,
+  requiereMotivo = false,
+  motivoLabel = 'Motivo',
+  onConfirmar,
+}) {
   const [password, setPassword] = useState('');
+  const [motivo, setMotivo] = useState('');
   const [error, setError] = useState('');
   const [procesando, setProcesando] = useState(false);
 
   function cerrar() {
     if (procesando) return;
     setPassword('');
+    setMotivo('');
     setError('');
     onClose();
   }
@@ -36,8 +48,9 @@ export default function ModalConfirmarPassword({ open, onClose, title, mensaje, 
     }
 
     try {
-      await onConfirmar(password);
+      await onConfirmar(password, motivo);
       setPassword('');
+      setMotivo('');
       onClose();
     } catch (err) {
       setError(extraerMensajeError(err));
@@ -68,10 +81,26 @@ export default function ModalConfirmarPassword({ open, onClose, title, mensaje, 
           className="mb-4 w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400"
         />
 
+        {requiereMotivo && (
+          <>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="motivo_confirmacion">
+              {motivoLabel}
+            </label>
+            <textarea
+              id="motivo_confirmacion"
+              required
+              rows={2}
+              value={motivo}
+              onChange={(event) => setMotivo(event.target.value)}
+              className="mb-4 w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400"
+            />
+          </>
+        )}
+
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            disabled={procesando || password.trim() === ''}
+            disabled={procesando || password.trim() === '' || (requiereMotivo && motivo.trim() === '')}
             className={`rounded-lg px-4 py-1.5 text-sm font-medium text-white transition disabled:opacity-50 ${
               peligro
                 ? 'bg-red-600 hover:bg-red-500'

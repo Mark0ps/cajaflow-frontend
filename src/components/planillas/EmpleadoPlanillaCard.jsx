@@ -1,17 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
-import SeccionComprasTienda from './SeccionComprasTienda';
-import SeccionLlegadasTarde from './SeccionLlegadasTarde';
+import SeccionDeducciones from './SeccionDeducciones';
 import SeccionPrestamo from './SeccionPrestamo';
 import ModalComprobante from './ModalComprobante';
-import { IconEngranaje, IconImprimir } from '../icons';
+import ModalRegistrarPago from './ModalRegistrarPago';
+import { IconEngranaje, IconImprimir, IconActualizar, IconMoneda, IconMasOpciones } from '../icons';
 import { formatearMoneda } from '../../utils/moneda';
 
 function redondear(valor) {
   return Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
 }
+
+function iniciales(nombre, apellido) {
+  return `${nombre?.charAt(0) ?? ''}${apellido?.charAt(0) ?? ''}`.toUpperCase();
+}
+
+export const ESTADO_PAGO_ESTILOS = {
+  pendiente: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  parcial: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
+  pagado: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+};
+
+export const ESTADO_PAGO_ETIQUETAS = { pendiente: 'Pendiente', parcial: 'Parcial', pagado: 'Pagado' };
 
 export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onActualizado }) {
   const [diasLaborados, setDiasLaborados] = useState(String(detalle.dias_laborados));
@@ -21,6 +33,20 @@ export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onAc
   const [error, setError] = useState('');
   const [modalMultiplicador, setModalMultiplicador] = useState(false);
   const [modalComprobante, setModalComprobante] = useState(false);
+  const [modalPago, setModalPago] = useState(false);
+  const [actualizandoDeducciones, setActualizandoDeducciones] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickFuera(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuAbierto(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickFuera);
+    return () => document.removeEventListener('mousedown', handleClickFuera);
+  }, []);
 
   const tarifaBase = Number(detalle.sueldo_diario) / 8;
   const [multiplicador, setMultiplicador] = useState(() => {
@@ -80,12 +106,47 @@ export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onAc
     });
   }
 
+  async function actualizarDeducciones() {
+    setMenuAbierto(false);
+    setError('');
+    setActualizandoDeducciones(true);
+
+    try {
+      const { data } = await api.post(`/planillas/${planilla.id}/detalles/${detalle.id}/actualizar-deducciones`);
+      onActualizado(data.detalle);
+    } catch (err) {
+      setError(extraerMensajeError(err));
+    } finally {
+      setActualizandoDeducciones(false);
+    }
+  }
+
   return (
     <div className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-          {detalle.empleado?.nombre} {detalle.empleado?.apellido}
-        </h3>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--bg-accent)] text-xs font-bold text-white">
+            {iniciales(detalle.empleado?.nombre, detalle.empleado?.apellido)}
+          </div>
+          <h3 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {detalle.empleado?.nombre} {detalle.empleado?.apellido}
+          </h3>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${ESTADO_PAGO_ESTILOS[detalle.estado_pago] ?? ''}`}
+        >
+          {ESTADO_PAGO_ETIQUETAS[detalle.estado_pago] ?? detalle.estado_pago}
+        </span>
+      </div>
+
+      <div className="mb-3 flex items-baseline justify-between gap-3 pl-10">
+        {detalle.estado_pago !== 'pagado' ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Saldo: {formatearMoneda(detalle.saldo_pendiente)}
+          </p>
+        ) : (
+          <span />
+        )}
         <span className="text-base font-bold text-slate-800 dark:text-slate-100">
           {formatearMoneda(detalle.total_a_pagar)}
         </span>
@@ -206,29 +267,7 @@ export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onAc
         </div>
       )}
 
-      <SeccionComprasTienda
-        planillaId={planilla.id}
-        detalle={detalle}
-        editable={editable}
-        onDetalleActualizado={onActualizado}
-        tipo="compra_credito"
-        titulo="Compras a crédito"
-        requiereMotivo={false}
-        textoVacio="Sin compras a crédito registradas."
-      />
-
-      <SeccionComprasTienda
-        planillaId={planilla.id}
-        detalle={detalle}
-        editable={editable}
-        onDetalleActualizado={onActualizado}
-        tipo="cobro_adicional"
-        titulo="Cobros adicionales"
-        requiereMotivo
-        textoVacio="Sin cobros adicionales registrados."
-      />
-
-      <SeccionLlegadasTarde
+      <SeccionDeducciones
         planillaId={planilla.id}
         detalle={detalle}
         editable={editable}
@@ -242,15 +281,56 @@ export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onAc
         onDetalleActualizado={onActualizado}
       />
 
-      <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
-        <button
-          type="button"
-          onClick={() => setModalComprobante(true)}
-          className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          <IconImprimir className="h-3.5 w-3.5" />
-          Ver / imprimir comprobante
-        </button>
+      <div className="mt-3 flex items-center gap-2 border-t-[0.5px] border-[var(--border)] pt-3">
+        {detalle.estado_pago !== 'pagado' && (
+          <button
+            type="button"
+            onClick={() => setModalPago(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500"
+          >
+            <IconMoneda className="h-3.5 w-3.5" />
+            Registrar pago
+          </button>
+        )}
+
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuAbierto((prev) => !prev)}
+            aria-label="Más opciones"
+            className="flex items-center rounded-lg border-[0.5px] border-[var(--border)] px-2 py-1.5 text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <IconMasOpciones className="h-4 w-4" />
+          </button>
+
+          {menuAbierto && (
+            <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-1)] py-1 shadow-lg">
+              {editable && (
+                <button
+                  type="button"
+                  onClick={actualizarDeducciones}
+                  disabled={actualizandoDeducciones}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  <IconActualizar className={`h-3.5 w-3.5 ${actualizandoDeducciones ? 'animate-spin' : ''}`} />
+                  {actualizandoDeducciones ? 'Actualizando...' : 'Actualizar deducciones'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuAbierto(false);
+                  setModalComprobante(true);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <IconImprimir className="h-3.5 w-3.5" />
+                Ver / imprimir comprobante
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <ModalComprobante
@@ -258,6 +338,13 @@ export default function EmpleadoPlanillaCard({ planilla, detalle, editable, onAc
         onClose={() => setModalComprobante(false)}
         planilla={planilla}
         detalle={detalle}
+      />
+
+      <ModalRegistrarPago
+        open={modalPago}
+        onClose={() => setModalPago(false)}
+        detalle={detalle}
+        onRegistrado={onActualizado}
       />
     </div>
   );

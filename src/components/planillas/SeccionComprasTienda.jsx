@@ -153,8 +153,10 @@ export default function SeccionComprasTienda({
   titulo,
   requiereMotivo,
   textoVacio,
+  encabezado = true,
 }) {
   const [abierto, setAbierto] = useState(false);
+  const mostrarContenido = encabezado ? abierto : true;
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
@@ -204,23 +206,25 @@ export default function SeccionComprasTienda({
   const total = compras.reduce((acumulado, compra) => acumulado + Number(compra.valor), 0);
 
   return (
-    <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
-      <button
-        type="button"
-        onClick={() => setAbierto((prev) => !prev)}
-        className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
-      >
-        <span>{titulo} {compras.length > 0 && `(${compras.length})`}</span>
-        <span className="flex items-center gap-2">
-          {compras.length > 0 && (
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
-          )}
-          <IconChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} />
-        </span>
-      </button>
+    <div className={encabezado ? 'mt-3 border-t-[0.5px] border-[var(--border)] pt-3' : ''}>
+      {encabezado && (
+        <button
+          type="button"
+          onClick={() => setAbierto((prev) => !prev)}
+          className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+        >
+          <span>{titulo} {compras.length > 0 && `(${compras.length})`}</span>
+          <span className="flex items-center gap-2">
+            {compras.length > 0 && (
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
+            )}
+            <IconChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
+      )}
 
-      {abierto && (
-        <div className="mt-2">
+      {mostrarContenido && (
+        <div className={encabezado ? 'mt-2' : ''}>
           {error && (
             <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
           )}

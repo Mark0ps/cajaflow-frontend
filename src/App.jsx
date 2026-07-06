@@ -17,6 +17,9 @@ import CierreCajaDetalle from './pages/caja/CierreCajaDetalle';
 import FacturasPendientes from './pages/gastos/FacturasPendientes';
 import GastosExternos from './pages/gastos/GastosExternos';
 import Reportes from './pages/reportes/Reportes';
+import AsignarVale from './pages/vales/AsignarVale';
+import PrestamosListado from './pages/prestamos/PrestamosListado';
+import UsuariosListado from './pages/usuarios/UsuariosListado';
 
 function RaizPorRol() {
   const { user } = useAuth();
@@ -46,10 +49,12 @@ function RutasProtegidas() {
               <Route path="/mi-turno" element={<MiCaja />} />
               <Route path="/planillas" element={<PlanillasListado />} />
               <Route path="/planillas/:id" element={<PlanillaDetalle />} />
-              <Route path="/prestamos" element={<Proximamente titulo="Préstamos" />} />
+              <Route path="/vales/asignar" element={<AsignarVale />} />
+              <Route path="/prestamos" element={<PrestamosListado />} />
               <Route path="/empleados" element={<EmpleadosListado />} />
               <Route path="/empleados/:id" element={<EmpleadoDetalle />} />
               <Route path="/proveedores" element={<Proximamente titulo="Proveedores" />} />
+              <Route path="/usuarios" element={<UsuariosListado />} />
             </Route>
 
             <Route element={<ProtectedRoute roles={['secretaria']} />}>

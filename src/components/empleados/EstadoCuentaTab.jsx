@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
@@ -147,8 +148,8 @@ export default function EstadoCuentaTab({ empleadoId }) {
           <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {pendientes.map((quincena) => (
               <li key={quincena.id}>
-                <label className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                <div className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <label className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
                       checked={seleccionadas.has(quincena.id)}
@@ -156,11 +157,19 @@ export default function EstadoCuentaTab({ empleadoId }) {
                       className="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
                     />
                     {NOMBRES_MESES[quincena.planilla.mes]} {quincena.planilla.anio} — Quincena {quincena.planilla.quincena}
+                  </label>
+                  <span className="flex items-center gap-3">
+                    <Link
+                      to={`/planillas/${quincena.planilla.id}`}
+                      className="text-xs font-medium text-slate-500 hover:underline dark:text-slate-400"
+                    >
+                      Ver planilla →
+                    </Link>
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                      {formatearMoneda(quincena.saldo_pendiente)}
+                    </span>
                   </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-100">
-                    {formatearMoneda(quincena.saldo_pendiente)}
-                  </span>
-                </label>
+                </div>
               </li>
             ))}
           </ul>

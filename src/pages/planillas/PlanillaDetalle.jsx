@@ -6,7 +6,7 @@ import Modal from '../../components/Modal';
 import ModalConfirmarPassword from '../../components/common/ModalConfirmarPassword';
 import ChecklistEmpleados from '../../components/planillas/ChecklistEmpleados';
 import EmpleadoPlanillaCard from '../../components/planillas/EmpleadoPlanillaCard';
-import { IconCandado, IconEliminar, IconUsuarios } from '../../components/icons';
+import { IconCandado, IconDesbloquear, IconEliminar, IconUsuarios } from '../../components/icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
 
 function ModalEditarEmpleados({ open, onClose, planilla, onActualizada }) {
@@ -111,6 +111,7 @@ export default function PlanillaDetalle() {
   const [modalEmpleados, setModalEmpleados] = useState(false);
   const [modalCerrar, setModalCerrar] = useState(false);
   const [modalEliminar, setModalEliminar] = useState(false);
+  const [modalReabrir, setModalReabrir] = useState(false);
 
   function cargar() {
     setError('');
@@ -148,6 +149,11 @@ export default function PlanillaDetalle() {
     navigate('/planillas', { replace: true });
   }
 
+  async function confirmarReabrir(password, motivo) {
+    const { data } = await api.post(`/planillas/${id}/reabrir`, { password, motivo });
+    setPlanilla((prev) => ({ ...prev, estado: data.estado, cerrada_en: data.cerrada_en }));
+  }
+
   if (loading) {
     return <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
   }
@@ -159,6 +165,8 @@ export default function PlanillaDetalle() {
   if (!planilla) return null;
 
   const editable = planilla.estado === 'borrador';
+  const sinPagos = planilla.detalles.every((detalle) => detalle.estado_pago === 'pendiente');
+  const puedeReabrir = planilla.estado === 'cerrada' && sinPagos;
   const totalGeneral = planilla.detalles.reduce((acumulado, detalle) => acumulado + Number(detalle.total_a_pagar), 0);
   const totalDeducciones = planilla.detalles.reduce(
     (acumulado, detalle) => acumulado + Number(detalle.total_deducciones),
@@ -218,6 +226,19 @@ export default function PlanillaDetalle() {
               </button>
             </div>
           )}
+
+          {puedeReabrir && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setModalReabrir(true)}
+                className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <IconDesbloquear className="h-4 w-4" />
+                Reabrir
+              </button>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -261,6 +282,17 @@ export default function PlanillaDetalle() {
         confirmLabel="Eliminar planilla"
         peligro
         onConfirmar={confirmarEliminar}
+      />
+
+      <ModalConfirmarPassword
+        open={modalReabrir}
+        onClose={() => setModalReabrir(false)}
+        title="Reabrir planilla"
+        mensaje="La planilla volverá a estado borrador y podrá editarse o eliminarse de nuevo. Indica el motivo para dejar rastro en el historial."
+        confirmLabel="Reabrir planilla"
+        requiereMotivo
+        motivoLabel="Motivo de la reapertura"
+        onConfirmar={confirmarReabrir}
       />
     </div>
   );

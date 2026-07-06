@@ -15,6 +15,8 @@ import {
   faMoneyBillTransfer,
   faWallet,
   faChevronDown,
+  faTicket,
+  faUserGear,
 } from '@fortawesome/free-solid-svg-icons';
 
 const NAV_POR_ROL = {
@@ -23,9 +25,11 @@ const NAV_POR_ROL = {
     { ruta: '/caja', icon: faCashRegister, label: 'Caja diaria' },
     { ruta: '/mi-turno', icon: faWallet, label: 'Mi turno' },
     { ruta: '/planillas', icon: faFileInvoiceDollar, label: 'Planillas' },
+    { ruta: '/vales/asignar', icon: faTicket, label: 'Asignar vale' },
     { ruta: '/prestamos', icon: faHandHoldingDollar, label: 'Préstamos' },
     { ruta: '/empleados', icon: faUsers, label: 'Empleados' },
     { ruta: '/proveedores', icon: faTruck, label: 'Proveedores' },
+    { ruta: '/usuarios', icon: faUserGear, label: 'Usuarios' },
     { ruta: '/reportes', icon: faChartBar, label: 'Reportes' },
   ],
   secretaria: [

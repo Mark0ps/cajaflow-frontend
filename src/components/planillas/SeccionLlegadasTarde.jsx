@@ -184,8 +184,9 @@ function FormLlegada({ planillaId, detalleId, sueldoDiario, llegada, onGuardado,
  * (horas + minutos/60) × (sueldo_diario / 8) —sin multiplicador, a
  * diferencia de horas extra— pero el campo queda editable directo.
  */
-export default function SeccionLlegadasTarde({ planillaId, detalle, editable, onDetalleActualizado }) {
+export default function SeccionLlegadasTarde({ planillaId, detalle, editable, onDetalleActualizado, encabezado = true }) {
   const [abierto, setAbierto] = useState(false);
+  const mostrarContenido = encabezado ? abierto : true;
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
   const [eliminandoId, setEliminandoId] = useState(null);
@@ -234,23 +235,25 @@ export default function SeccionLlegadasTarde({ planillaId, detalle, editable, on
   const total = llegadas.reduce((acumulado, llegada) => acumulado + Number(llegada.valor_deduccion), 0);
 
   return (
-    <div className="mt-3 border-t-[0.5px] border-[var(--border)] pt-3">
-      <button
-        type="button"
-        onClick={() => setAbierto((prev) => !prev)}
-        className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
-      >
-        <span>Llegadas tarde {llegadas.length > 0 && `(${llegadas.length})`}</span>
-        <span className="flex items-center gap-2">
-          {llegadas.length > 0 && (
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
-          )}
-          <IconChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} />
-        </span>
-      </button>
+    <div className={encabezado ? 'mt-3 border-t-[0.5px] border-[var(--border)] pt-3' : ''}>
+      {encabezado && (
+        <button
+          type="button"
+          onClick={() => setAbierto((prev) => !prev)}
+          className="flex w-full items-center justify-between text-left text-xs font-medium text-slate-500 dark:text-slate-400"
+        >
+          <span>Llegadas tarde {llegadas.length > 0 && `(${llegadas.length})`}</span>
+          <span className="flex items-center gap-2">
+            {llegadas.length > 0 && (
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{formatearMoneda(total)}</span>
+            )}
+            <IconChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
+      )}
 
-      {abierto && (
-        <div className="mt-2">
+      {mostrarContenido && (
+        <div className={encabezado ? 'mt-2' : ''}>
           {error && (
             <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
           )}

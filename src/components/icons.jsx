@@ -71,6 +71,15 @@ export function IconCandado({ className }) {
   );
 }
 
+export function IconDesbloquear({ className }) {
+  return (
+    <svg {...base({ className })}>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </svg>
+  );
+}
+
 export function IconCamara({ className }) {
   return (
     <svg {...base({ className })}>
@@ -123,6 +132,34 @@ export function IconImprimir({ className }) {
       <polyline points="6 9 6 2 18 2 18 9" />
       <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
       <rect x="6" y="14" width="12" height="8" />
+    </svg>
+  );
+}
+
+export function IconActualizar({ className }) {
+  return (
+    <svg {...base({ className })}>
+      <path d="M21 12a9 9 0 1 1-3-6.7" />
+      <polyline points="21 3 21 9 15 9" />
+    </svg>
+  );
+}
+
+export function IconMasOpciones({ className }) {
+  return (
+    <svg {...base({ className })}>
+      <circle cx="12" cy="5" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <circle cx="12" cy="19" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function IconMoneda({ className }) {
+  return (
+    <svg {...base({ className })}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v10M9.5 9.5c0-1.4 1.2-2.5 2.5-2.5s2.5.9 2.5 2c0 2-5 1.5-5 3.5 0 1.1 1.2 2 2.5 2s2.5-1.1 2.5-2.5" />
     </svg>
   );
 }
