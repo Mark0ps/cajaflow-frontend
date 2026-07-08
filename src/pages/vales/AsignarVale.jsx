@@ -4,6 +4,7 @@ import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../../components/common/NumberInput';
 import { IconCamara, IconCheck, IconEliminar, IconSubir } from '../../components/icons';
 import { fechaLocalHoy, formatearMoneda } from '../../utils/moneda';
+import { comprimirImagen } from '../../utils/comprimirImagen';
 
 const SELECT_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
@@ -36,8 +37,9 @@ export default function AsignarVale() {
 
   // Dos inputs separados (cámara vs. galería): mezclar accept imagen+PDF en
   // un solo input esconde la opción de cámara en navegadores móviles.
-  function handleArchivoSeleccionado(event) {
-    setComprobante(event.target.files?.[0] ?? null);
+  async function handleArchivoSeleccionado(event) {
+    const file = event.target.files?.[0] ?? null;
+    setComprobante(file ? await comprimirImagen(file) : null);
   }
 
   function quitarComprobante() {

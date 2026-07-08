@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import ModalMotivo from '../common/ModalMotivo';
 import LightboxFoto from '../common/LightboxFoto';
+import { comprimirImagen } from '../../utils/comprimirImagen';
 import { IconCamara, IconSubir, IconEliminar } from '../icons';
 
 /**
@@ -63,11 +64,13 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
     }
   }
 
-  function handleArchivoSeleccionado(event) {
-    const file = event.target.files?.[0];
+  async function handleArchivoSeleccionado(event) {
+    const original = event.target.files?.[0];
     event.target.value = ''; // permite volver a elegir el mismo archivo después
 
-    if (!file) return;
+    if (!original) return;
+
+    const file = await comprimirImagen(original);
 
     if (requerirMotivo) {
       setArchivoPendiente(file);

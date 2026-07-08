@@ -5,6 +5,7 @@ import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
 import { IconCamara, IconSubir, IconCheck } from '../icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
+import { comprimirImagen } from '../../utils/comprimirImagen';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
 
@@ -31,8 +32,9 @@ export default function EstadoCuentaTab({ empleadoId }) {
   // `accept` mezcla imágenes y PDF, los navegadores móviles esconden la
   // opción de cámara y solo dejan elegir de archivos/galería. Ambos botones
   // terminan seteando el mismo estado `comprobante`.
-  function handleArchivoSeleccionado(event) {
-    setComprobante(event.target.files?.[0] ?? null);
+  async function handleArchivoSeleccionado(event) {
+    const file = event.target.files?.[0] ?? null;
+    setComprobante(file ? await comprimirImagen(file) : null);
   }
 
   function quitarComprobante() {

@@ -5,6 +5,7 @@ import Modal from '../Modal';
 import NumberInput from '../common/NumberInput';
 import { IconCamara, IconSubir, IconCheck } from '../icons';
 import { fechaLocalHoy } from '../../utils/moneda';
+import { comprimirImagen } from '../../utils/comprimirImagen';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
 
@@ -34,8 +35,9 @@ export default function ModalRegistrarPago({ open, onClose, detalle, onRegistrad
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, detalle.id]);
 
-  function handleArchivoSeleccionado(event) {
-    setComprobante(event.target.files?.[0] ?? null);
+  async function handleArchivoSeleccionado(event) {
+    const file = event.target.files?.[0] ?? null;
+    setComprobante(file ? await comprimirImagen(file) : null);
   }
 
   function quitarComprobante() {
