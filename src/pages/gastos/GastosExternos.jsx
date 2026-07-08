@@ -28,8 +28,10 @@ function GastoExternoCard({ gasto, onEditar, onEliminar }) {
   const emitidoDistintoDeRegistrado = difierenPorDia(gasto.fecha_emision, gasto.created_at);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
-      <div className="min-w-0 flex-1">
+    // En móvil se apila: el bloque derecho (Fact# largo + valor + botones) es
+    // shrink-0 y en una sola fila aplastaba el nombre del proveedor a ancho 0
+    <div className="flex flex-col gap-2 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <div className="min-w-0 sm:flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">
             {gasto.proveedor?.nombre ?? gasto.proveedor_nombre_libre ?? 'Sin registrar'}
@@ -51,11 +53,11 @@ function GastoExternoCard({ gasto, onEditar, onEliminar }) {
 
       <div className="flex shrink-0 items-center gap-3">
         {gasto.factura_pendiente ? (
-          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
             Factura pendiente
           </span>
         ) : (
-          <span className="text-xs text-slate-500 dark:text-slate-400">Fact# {gasto.numero_factura}</span>
+          <span className="min-w-0 flex-1 truncate text-xs text-slate-500 sm:flex-none dark:text-slate-400">Fact# {gasto.numero_factura}</span>
         )}
         <span className="font-semibold text-slate-700 dark:text-slate-200">{formatearMoneda(gasto.valor)}</span>
         <button

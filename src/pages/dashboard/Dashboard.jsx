@@ -14,6 +14,14 @@ function claseDiferencia(valor) {
   return valor < 0 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400';
 }
 
+// Versión corta para las celdas del calendario en móvil (~45px de ancho),
+// donde "L. 1,660.00" truncaba a "L. 1...": 1660 → "1.7k".
+function formatearCompacto(valor) {
+  const n = Number(valor) || 0;
+  if (Math.abs(n) >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(Math.round(n));
+}
+
 function ModalDia({ fecha, onClose }) {
   const navigate = useNavigate();
   const [detalle, setDetalle] = useState(null);
@@ -222,7 +230,10 @@ export default function Dashboard() {
 
                     {dia.tiene_cierres && (
                       <span className="mt-auto space-y-0.5">
-                        <span className="block truncate text-[11px] font-semibold text-slate-800 dark:text-slate-100 sm:text-xs">
+                        <span className="block truncate text-[11px] font-semibold text-slate-800 sm:hidden dark:text-slate-100">
+                          {formatearCompacto(dia.total_ingreso)}
+                        </span>
+                        <span className="hidden truncate text-xs font-semibold text-slate-800 sm:block dark:text-slate-100">
                           {formatearMoneda(dia.total_ingreso)}
                         </span>
                         <span className="hidden truncate text-[11px] text-slate-500 sm:block dark:text-slate-400">
@@ -234,9 +245,16 @@ export default function Dashboard() {
                           </span>
                         )}
                         {dia.diferencia !== 0 && (
-                          <span className={`block truncate text-[11px] font-medium ${claseDiferencia(dia.diferencia)}`}>
-                            {dia.diferencia < 0 ? 'Faltante' : 'Sobrante'} {formatearMoneda(Math.abs(dia.diferencia))}
-                          </span>
+                          <>
+                            <span
+                              className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${
+                                dia.diferencia < 0 ? 'bg-red-500' : 'bg-amber-500'
+                              }`}
+                            />
+                            <span className={`hidden truncate text-[11px] font-medium sm:block ${claseDiferencia(dia.diferencia)}`}>
+                              {dia.diferencia < 0 ? 'Faltante' : 'Sobrante'} {formatearMoneda(Math.abs(dia.diferencia))}
+                            </span>
+                          </>
                         )}
                       </span>
                     )}

@@ -246,7 +246,8 @@ export default function PlanillaDetalle() {
         )}
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(380px,1fr))] gap-3.5">
+      {/* min(380px,100%): un mínimo duro de 380px desbordaba el viewport móvil (375px) */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(380px,100%),1fr))] gap-3.5">
         {planilla.detalles.map((detalle) => (
           <EmpleadoPlanillaCard
             key={detalle.id}

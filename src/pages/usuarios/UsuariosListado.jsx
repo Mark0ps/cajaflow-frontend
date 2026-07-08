@@ -53,7 +53,10 @@ export default function UsuariosListado() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      {/* overflow-x-auto: en móvil la tabla excede el viewport; con
+          overflow-hidden las columnas de estado/acciones quedaban cortadas
+          sin forma de alcanzarlas */}
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading ? (
           <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
         ) : error ? (
@@ -61,7 +64,7 @@ export default function UsuariosListado() {
         ) : usuarios.length === 0 ? (
           <p className="p-6 text-sm text-slate-400 dark:text-slate-500">No hay usuarios registrados.</p>
         ) : (
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-2 font-medium">Nombre</th>
