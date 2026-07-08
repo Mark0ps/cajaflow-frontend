@@ -57,7 +57,7 @@ function RutasProtegidas() {
               <Route path="/usuarios" element={<UsuariosListado />} />
             </Route>
 
-            <Route element={<ProtectedRoute roles={['secretaria']} />}>
+            <Route element={<ProtectedRoute roles={['admin', 'secretaria']} />}>
               <Route path="/facturas-pendientes" element={<FacturasPendientes />} />
               <Route path="/gastos-externos" element={<GastosExternos />} />
             </Route>

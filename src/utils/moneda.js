@@ -30,3 +30,14 @@ export function formatearFechaLarga(fechaIso) {
   const fecha = new Date(`${String(fechaIso).slice(0, 10)}T00:00:00`);
   return `${DIAS[fecha.getDay()]} ${fecha.getDate()} ${MESES[fecha.getMonth()]} ${fecha.getFullYear()}`;
 }
+
+/** "7 jul 2026" — sin nombre de día, para mostrar dos fechas juntas en poco espacio. */
+export function formatearFechaCorta(fechaIso) {
+  const fecha = new Date(`${String(fechaIso).slice(0, 10)}T00:00:00`);
+  return `${fecha.getDate()} ${MESES[fecha.getMonth()].slice(0, 3)} ${fecha.getFullYear()}`;
+}
+
+/** true si dos fechas ISO (con o sin hora) caen en días de calendario distintos. */
+export function difierenPorDia(fechaIsoA, fechaIsoB) {
+  return String(fechaIsoA).slice(0, 10) !== String(fechaIsoB).slice(0, 10);
+}

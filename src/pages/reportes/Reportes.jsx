@@ -79,6 +79,7 @@ export default function Reportes() {
   const [hasta, setHasta] = useState(hoyIso());
   const [agrupacion, setAgrupacion] = useState('diario');
   const [facturaNominal, setFacturaNominal] = useState('');
+  const [categoria, setCategoria] = useState('');
 
   const [periodo, setPeriodo] = useState([]);
   const [metodoPago, setMetodoPago] = useState(null);
@@ -98,7 +99,13 @@ export default function Reportes() {
     Promise.all([
       api.get('/reportes/periodo', { params: { ...params, agrupacion } }),
       api.get('/reportes/metodo-pago', { params }),
-      api.get('/reportes/gastos-vs-ingresos', { params: { ...params, ...(facturaNominal ? { factura_nominal: facturaNominal } : {}) } }),
+      api.get('/reportes/gastos-vs-ingresos', {
+        params: {
+          ...params,
+          ...(facturaNominal ? { factura_nominal: facturaNominal } : {}),
+          ...(categoria ? { categoria } : {}),
+        },
+      }),
       api.get('/reportes/vales-por-empleado', { params }),
     ])
       .then(([resPeriodo, resMetodo, resBalance, resVales]) => {
@@ -109,7 +116,7 @@ export default function Reportes() {
       })
       .catch(() => setError('No se pudieron cargar los reportes.'))
       .finally(() => setLoading(false));
-  }, [desde, hasta, agrupacion, facturaNominal]);
+  }, [desde, hasta, agrupacion, facturaNominal, categoria]);
 
   const datosMetodo = metodoPago
     ? [
@@ -180,6 +187,21 @@ export default function Reportes() {
               <option value="sin">Sin factura nominal</option>
             </select>
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400" htmlFor="reporte_categoria">
+              Categoría de gasto
+            </label>
+            <select
+              id="reporte_categoria"
+              value={categoria}
+              onChange={(event) => setCategoria(event.target.value)}
+              className={INPUT_CLASES}
+            >
+              <option value="">Todas</option>
+              <option value="gasto_operativo">Gasto operativo</option>
+              <option value="pago_tarjeta_credito">Pago de tarjeta de crédito</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -188,7 +210,7 @@ export default function Reportes() {
       )}
 
       {balance && (
-        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatTile label="Ingresos del período" valor={formatearMoneda(balance.total_ingresos)} />
           <StatTile
             label="Gastos de caja"
@@ -203,6 +225,7 @@ export default function Reportes() {
               balance.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
             }
           />
+          <StatTile label="Pagado en tarjetas de crédito" valor={formatearMoneda(balance.total_pago_tarjeta_credito)} />
         </div>
       )}
 

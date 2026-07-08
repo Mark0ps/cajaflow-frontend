@@ -16,31 +16,40 @@ function claseDiferencia(valor) {
 
 function ModalDia({ fecha, onClose }) {
   const navigate = useNavigate();
-  const [cierres, setCierres] = useState(null);
+  const [detalle, setDetalle] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!fecha) return;
 
-    setCierres(null);
+    setDetalle(null);
     setError('');
 
     api
       .get('/dashboard/dia', { params: { fecha } })
-      .then(({ data }) => setCierres(data))
+      .then(({ data }) => setDetalle(data))
       .catch(() => setError('No se pudo cargar el detalle del día.'));
   }, [fecha]);
+
+  const cierres = detalle?.cierres ?? [];
+  const resumen = detalle?.resumen;
 
   return (
     <Modal open={Boolean(fecha)} onClose={onClose} title={fecha ? formatearFechaLarga(fecha) : ''} maxWidth="max-w-2xl">
       {error ? (
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-      ) : !cierres ? (
+      ) : !detalle ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
       ) : cierres.length === 0 ? (
         <p className="text-sm text-slate-400 dark:text-slate-500">No hay cierres registrados este día.</p>
       ) : (
         <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile label="Total venta" valor={formatearMoneda(resumen.total_venta)} />
+            <StatTile label="Total efectivo" valor={formatearMoneda(resumen.total_efectivo)} />
+            
+          </div>
+
           {cierres.map((cierre) => (
             <button
               key={cierre.id}

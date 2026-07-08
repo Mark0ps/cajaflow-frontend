@@ -30,6 +30,8 @@ const NAV_POR_ROL = {
     { ruta: '/empleados', icon: faUsers, label: 'Empleados' },
     { ruta: '/proveedores', icon: faTruck, label: 'Proveedores' },
     { ruta: '/usuarios', icon: faUserGear, label: 'Usuarios' },
+    { ruta: '/facturas-pendientes', icon: faFileInvoice, label: 'Facturas pendientes' },
+    { ruta: '/gastos-externos', icon: faMoneyBillTransfer, label: 'Gastos externos' },
     { ruta: '/reportes', icon: faChartBar, label: 'Reportes' },
   ],
   secretaria: [
