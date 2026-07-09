@@ -52,10 +52,11 @@ function ModalDia({ fecha, onClose }) {
         <p className="text-sm text-slate-400 dark:text-slate-500">No hay cierres registrados este día.</p>
       ) : (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <StatTile label="Total venta" valor={formatearMoneda(resumen.total_venta)} />
-            <StatTile label="Total efectivo" valor={formatearMoneda(resumen.total_efectivo)} />
-
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <StatTile compacto label="Total venta" valor={formatearMoneda(resumen.total_venta)} />
+            <StatTile compacto label="Total efectivo" valor={formatearMoneda(resumen.total_efectivo)} />
+            <StatTile compacto label="Total tarjeta" valor={formatearMoneda(resumen.total_tarjeta)} />
+            <StatTile compacto label="Total transferencia" valor={formatearMoneda(resumen.total_transferencia)} />
           </div>
 
           {cierres.map((cierre) => (
