@@ -41,3 +41,21 @@ export function formatearFechaCorta(fechaIso) {
 export function difierenPorDia(fechaIsoA, fechaIsoB) {
   return String(fechaIsoA).slice(0, 10) !== String(fechaIsoB).slice(0, 10);
 }
+
+/**
+ * Últimos `cantidad` meses (incluyendo el actual), más recientes primero,
+ * como { value: "2026-07", label: "Julio 2026" } — para selects de mes.
+ */
+export function generarOpcionesMes(cantidad = 12) {
+  const ahora = new Date();
+  const opciones = [];
+
+  for (let i = 0; i < cantidad; i += 1) {
+    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+    const anio = fecha.getFullYear();
+    const mes = fecha.getMonth() + 1;
+    opciones.push({ value: `${anio}-${String(mes).padStart(2, '0')}`, label: `${NOMBRES_MESES[mes]} ${anio}` });
+  }
+
+  return opciones;
+}

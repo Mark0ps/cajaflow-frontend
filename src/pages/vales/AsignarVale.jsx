@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
+import HistorialVales from '../../components/vales/HistorialVales';
 import NumberInput from '../../components/common/NumberInput';
-import { IconCamara, IconCheck, IconEliminar, IconSubir } from '../../components/icons';
-import { fechaLocalHoy, formatearMoneda } from '../../utils/moneda';
+import { IconCamara, IconCheck, IconSubir } from '../../components/icons';
+import { fechaLocalHoy } from '../../utils/moneda';
 import { comprimirImagen } from '../../utils/comprimirImagen';
 
 const SELECT_CLASES =
@@ -23,7 +24,8 @@ export default function AsignarVale() {
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [valesCreados, setValesCreados] = useState([]);
+  // Cada vale creado incrementa esto para que el historial se refresque.
+  const [refreshHistorial, setRefreshHistorial] = useState(0);
 
   const inputCamaraRef = useRef(null);
   const inputArchivoRef = useRef(null);
@@ -78,11 +80,11 @@ export default function AsignarVale() {
     if (comprobante) formData.append('comprobante', comprobante);
 
     try {
-      const { data } = await api.post('/vales', formData, {
+      await api.post('/vales', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setExito('Vale asignado correctamente.');
-      setValesCreados((prev) => [data, ...prev]);
+      setRefreshHistorial((prev) => prev + 1);
       setMonto('');
       setDescripcion('');
       setFechaEmision(fechaLocalHoy());
@@ -91,15 +93,6 @@ export default function AsignarVale() {
       setError(extraerMensajeError(err));
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function eliminarValeCreado(vale) {
-    try {
-      await api.delete(`/vales/${vale.id}`);
-      setValesCreados((prev) => prev.filter((v) => v.id !== vale.id));
-    } catch (err) {
-      setError(extraerMensajeError(err));
     }
   }
 
@@ -261,29 +254,9 @@ export default function AsignarVale() {
         </form>
       </div>
 
-      {valesCreados.length > 0 && (
-        <div className="mt-4 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Vales asignados en esta sesión</h2>
-          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
-            {valesCreados.map((vale) => (
-              <li key={vale.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="text-slate-700 dark:text-slate-200">
-                  {vale.empleado?.nombre} {vale.empleado?.apellido} · {formatearMoneda(vale.monto)} ·{' '}
-                  {String(vale.fecha_emision).slice(0, 10)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => eliminarValeCreado(vale)}
-                  aria-label="Eliminar vale"
-                  className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
-                >
-                  <IconEliminar className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Historial completo del mes (turno + libres) — reemplaza la antigua
+          lista de "vales de esta sesión"; toda edición desde aquí exige motivo */}
+      <HistorialVales refreshKey={refreshHistorial} />
     </div>
   );
 }

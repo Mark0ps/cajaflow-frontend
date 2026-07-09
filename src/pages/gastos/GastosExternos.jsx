@@ -4,25 +4,10 @@ import { extraerMensajeError } from '../../api/errores';
 import Modal from '../../components/Modal';
 import FormGastoExterno from '../../components/gastos/FormGastoExterno';
 import { IconEditar, IconEliminar, IconFiltro } from '../../components/icons';
-import { NOMBRES_MESES, difierenPorDia, formatearFechaCorta, formatearMoneda } from '../../utils/moneda';
+import { difierenPorDia, formatearFechaCorta, formatearMoneda, generarOpcionesMes } from '../../utils/moneda';
 
 const CAMPO_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
-
-/** Últimos `cantidad` meses (incluyendo el actual), más recientes primero. */
-function generarOpcionesMes(cantidad = 12) {
-  const ahora = new Date();
-  const opciones = [];
-
-  for (let i = 0; i < cantidad; i += 1) {
-    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
-    const anio = fecha.getFullYear();
-    const mes = fecha.getMonth() + 1;
-    opciones.push({ value: `${anio}-${String(mes).padStart(2, '0')}`, label: `${NOMBRES_MESES[mes]} ${anio}` });
-  }
-
-  return opciones;
-}
 
 function GastoExternoCard({ gasto, onEditar, onEliminar }) {
   const emitidoDistintoDeRegistrado = difierenPorDia(gasto.fecha_emision, gasto.created_at);

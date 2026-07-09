@@ -55,7 +55,7 @@ function ModalDia({ fecha, onClose }) {
           <div className="grid grid-cols-2 gap-3">
             <StatTile label="Total venta" valor={formatearMoneda(resumen.total_venta)} />
             <StatTile label="Total efectivo" valor={formatearMoneda(resumen.total_efectivo)} />
-            
+
           </div>
 
           {cierres.map((cierre) => (
@@ -173,9 +173,10 @@ export default function Dashboard() {
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
         <StatTile label="Ingresos del mes" valor={formatearMoneda(totalIngresos)} />
         <StatTile label="Gastos de caja" valor={formatearMoneda(totalGastos)} />
+        <StatTile label="Total Ventas" valor={formatearMoneda(totalGastos + totalIngresos, 0)} />
         <StatTile
           label="Diferencia acumulada"
           valor={formatearMoneda(totalDiferencia)}
@@ -183,8 +184,14 @@ export default function Dashboard() {
           className={claseDiferencia(totalDiferencia)}
         />
         <StatTile label="Días con actividad" valor={diasConCierres} detalle={`de ${dias.length} días`} />
+        <StatTile
+          label="Total Ventas"
+          valor={formatearMoneda(totalGastos + totalIngresos, 0)}
+          detalle={`+ ${formatearMoneda(totalIngresos)} ingresos` }
+          className={claseDiferencia(totalDiferencia)}
+        />
       </div>
-
+      
       <div className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-3">
         {loading ? (
           <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
@@ -212,18 +219,16 @@ export default function Dashboard() {
                     type="button"
                     onClick={() => setDiaSeleccionado(dia.fecha)}
                     disabled={!dia.tiene_cierres}
-                    className={`flex min-h-16 flex-col rounded-lg border-[0.5px] p-1.5 text-left transition sm:min-h-20 ${
-                      dia.tiene_cierres
-                        ? 'border-[var(--border)] bg-[var(--surface-1)] hover:shadow-md'
-                        : 'border-transparent'
-                    }`}
+                    className={`flex min-h-16 flex-col rounded-lg border-[0.5px] p-1.5 text-left transition sm:min-h-20 ${dia.tiene_cierres
+                      ? 'border-[var(--border)] bg-[var(--surface-1)] hover:shadow-md'
+                      : 'border-transparent'
+                      }`}
                   >
                     <span
-                      className={`text-xs ${
-                        dia.tiene_cierres
-                          ? 'font-semibold text-slate-700 dark:text-slate-200'
-                          : 'text-slate-300 dark:text-slate-600'
-                      }`}
+                      className={`text-xs ${dia.tiene_cierres
+                        ? 'font-semibold text-slate-700 dark:text-slate-200'
+                        : 'text-slate-300 dark:text-slate-600'
+                        }`}
                     >
                       {numero}
                     </span>
@@ -247,9 +252,8 @@ export default function Dashboard() {
                         {dia.diferencia !== 0 && (
                           <>
                             <span
-                              className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${
-                                dia.diferencia < 0 ? 'bg-red-500' : 'bg-amber-500'
-                              }`}
+                              className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${dia.diferencia < 0 ? 'bg-red-500' : 'bg-amber-500'
+                                }`}
                             />
                             <span className={`hidden truncate text-[11px] font-medium sm:block ${claseDiferencia(dia.diferencia)}`}>
                               {dia.diferencia < 0 ? 'Faltante' : 'Sobrante'} {formatearMoneda(Math.abs(dia.diferencia))}
