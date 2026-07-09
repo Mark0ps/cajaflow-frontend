@@ -4,6 +4,7 @@ import { extraerMensajeError } from '../../api/errores';
 import Modal from '../../components/Modal';
 import FormProveedor from '../../components/proveedores/FormProveedor';
 import { IconEditar, IconEliminar, IconFiltro } from '../../components/icons';
+import { SkeletonListado } from '../../components/common/Skeleton';
 
 const CAMPO_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
@@ -215,7 +216,7 @@ export default function ProveedoresListado() {
       )}
 
       {loading ? (
-        <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonListado />
       ) : activos.length === 0 && inactivos.length === 0 ? (
         <p className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-6 text-sm text-slate-400 dark:text-slate-500">
           No hay proveedores que coincidan con la búsqueda.

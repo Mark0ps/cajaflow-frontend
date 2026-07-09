@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import Modal from '../../components/Modal';
 import StatTile from '../../components/common/StatTile';
+import { SkeletonCalendario, SkeletonKpis } from '../../components/common/Skeleton';
 import { ESTADO_CIERRE_ESTILOS, ESTADO_CIERRE_ETIQUETAS } from '../caja/CierresCajaListado';
 import { formatearFechaLarga, formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
 
@@ -47,7 +48,7 @@ function ModalDia({ fecha, onClose }) {
       {error ? (
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : !detalle ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonKpis cantidad={4} columnas="grid-cols-2 sm:grid-cols-4" />
       ) : cierres.length === 0 ? (
         <p className="text-sm text-slate-400 dark:text-slate-500">No hay cierres registrados este día.</p>
       ) : (
@@ -174,22 +175,28 @@ export default function Dashboard() {
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatTile label="Ingresos del mes" valor={formatearMoneda(totalIngresos)} />
-        <StatTile label="Gastos de caja" valor={formatearMoneda(totalGastos)} />
-        <StatTile label="Total ventas" valor={formatearMoneda(totalGastos + totalIngresos)} />
-        <StatTile
-          label="Diferencia acumulada"
-          valor={formatearMoneda(totalDiferencia)}
-          detalle={totalDiferencia === 0 ? 'Todo cuadra' : totalDiferencia < 0 ? 'Faltante' : 'Sobrante'}
-          className={claseDiferencia(totalDiferencia)}
-        />
-        <StatTile label="Días con actividad" valor={diasConCierres} detalle={`de ${dias.length} días`} />
-      </div>
+      {loading ? (
+        <div className="mb-4">
+          <SkeletonKpis cantidad={5} columnas="grid-cols-2 lg:grid-cols-5" />
+        </div>
+      ) : (
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <StatTile label="Ingresos del mes" valor={formatearMoneda(totalIngresos)} />
+          <StatTile label="Gastos de caja" valor={formatearMoneda(totalGastos)} />
+          <StatTile label="Total ventas" valor={formatearMoneda(totalGastos + totalIngresos)} />
+          <StatTile
+            label="Diferencia acumulada"
+            valor={formatearMoneda(totalDiferencia)}
+            detalle={totalDiferencia === 0 ? 'Todo cuadra' : totalDiferencia < 0 ? 'Faltante' : 'Sobrante'}
+            className={claseDiferencia(totalDiferencia)}
+          />
+          <StatTile label="Días con actividad" valor={diasConCierres} detalle={`de ${dias.length} días`} />
+        </div>
+      )}
       
       <div className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-3">
         {loading ? (
-          <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+          <SkeletonCalendario />
         ) : (
           <>
             <div className="mb-1 grid grid-cols-7 gap-1">

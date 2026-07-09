@@ -4,6 +4,7 @@ import Modal from '../../components/Modal';
 import FormUsuario from '../../components/usuarios/FormUsuario';
 import ModalResetPassword from '../../components/usuarios/ModalResetPassword';
 import { IconEditar } from '../../components/icons';
+import { SkeletonLineas } from '../../components/common/Skeleton';
 
 const ROLE_ESTILOS = {
   admin: 'bg-slate-800 text-white dark:bg-slate-700',
@@ -58,7 +59,9 @@ export default function UsuariosListado() {
           sin forma de alcanzarlas */}
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {loading ? (
-          <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+          <div className="p-4">
+            <SkeletonLineas lineas={5} />
+          </div>
         ) : error ? (
           <p className="p-6 text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : usuarios.length === 0 ? (

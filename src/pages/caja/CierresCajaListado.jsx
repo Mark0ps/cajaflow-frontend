@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import ModalConfirmarPassword from '../../components/common/ModalConfirmarPassword';
 import { IconEditar, IconEliminar } from '../../components/icons';
 import { formatearFechaLarga, formatearMoneda } from '../../utils/moneda';
+import { SkeletonListado } from '../../components/common/Skeleton';
 
 // Colores semánticos: abierto = gris neutro (en curso, nada que resaltar),
 // cerrado = azul (informativo, pendiente de revisión), revisado = verde
@@ -167,7 +168,7 @@ export default function CierresCajaListado() {
       </div>
 
       {loading ? (
-        <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonListado />
       ) : cierres.length === 0 ? (
         <p className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-6 text-sm text-slate-400 dark:text-slate-500">
           No hay cierres de caja para los filtros seleccionados.

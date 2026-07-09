@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import FormApertura from '../../components/caja/FormApertura';
 import PanelTrabajo from '../../components/caja/PanelTrabajo';
+import { SkeletonDetalle } from '../../components/common/Skeleton';
 
 export default function MiCaja() {
   const [cierre, setCierre] = useState(null);
@@ -48,7 +49,7 @@ export default function MiCaja() {
   }
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</div>;
+    return <SkeletonDetalle />;
   }
 
   if (error) {

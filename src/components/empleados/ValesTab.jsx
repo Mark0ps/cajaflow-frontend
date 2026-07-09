@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import { formatearMoneda } from '../../utils/moneda';
+import { SkeletonLineas } from '../common/Skeleton';
 
 const ESTADO_APLICADO_ESTILOS = {
   true: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
@@ -22,7 +23,7 @@ export default function ValesTab({ empleadoId }) {
   }, [empleadoId]);
 
   if (loading) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <SkeletonLineas lineas={4} />;
   }
 
   if (error) {

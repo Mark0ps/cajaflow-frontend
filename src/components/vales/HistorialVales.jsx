@@ -5,6 +5,7 @@ import Modal from '../Modal';
 import ModalMotivo from '../common/ModalMotivo';
 import NumberInput from '../common/NumberInput';
 import { IconEditar, IconEliminar } from '../icons';
+import { SkeletonLineas } from '../common/Skeleton';
 import { fechaLocalHoy, formatearFechaCorta, formatearMoneda, generarOpcionesMes } from '../../utils/moneda';
 
 const SELECT_CLASES =
@@ -91,7 +92,9 @@ export default function HistorialVales({ refreshKey }) {
       )}
 
       {vales === null ? (
-        <p className="py-4 text-sm text-slate-400 dark:text-slate-500">Cargando...</p>
+        <div className="py-2">
+          <SkeletonLineas lineas={3} />
+        </div>
       ) : vales.length === 0 ? (
         <p className="py-4 text-sm text-slate-400 dark:text-slate-500">Sin vales en este mes.</p>
       ) : (

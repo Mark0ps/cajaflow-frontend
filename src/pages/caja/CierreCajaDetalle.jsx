@@ -15,6 +15,7 @@ import ModalCompletarFactura from '../../components/gastos/ModalCompletarFactura
 import ModalConfirmarPassword from '../../components/common/ModalConfirmarPassword';
 import { ESTADO_CIERRE_ESTILOS, ESTADO_CIERRE_ETIQUETAS } from './CierresCajaListado';
 import { formatearFechaLarga, formatearMoneda } from '../../utils/moneda';
+import { SkeletonDetalle } from '../../components/common/Skeleton';
 
 function Seccion({ titulo, children }) {
   return (
@@ -101,7 +102,7 @@ export default function CierreCajaDetalle() {
   }
 
   if (loading) {
-    return <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <SkeletonDetalle />;
   }
 
   if (error && !cierre) {

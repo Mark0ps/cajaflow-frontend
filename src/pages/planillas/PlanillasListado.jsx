@@ -5,6 +5,7 @@ import Modal from '../../components/Modal';
 import FormGenerarPlanilla from '../../components/planillas/FormGenerarPlanilla';
 import { IconUsuarios } from '../../components/icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
+import { SkeletonCardGrid } from '../../components/common/Skeleton';
 
 const ESTADO_ESTILOS = {
   borrador: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
@@ -50,7 +51,7 @@ export default function PlanillasListado() {
       </div>
 
       {loading ? (
-        <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonCardGrid cantidad={2} />
       ) : error ? (
         <p className="p-6 text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : planillas.length === 0 ? (

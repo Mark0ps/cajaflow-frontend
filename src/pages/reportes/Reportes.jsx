@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import api from '../../api/axios';
 import StatTile from '../../components/common/StatTile';
+import { Skeleton } from '../../components/common/Skeleton';
 import { formatearMoneda } from '../../utils/moneda';
 
 const HOY = new Date();
@@ -62,7 +63,9 @@ function Grafico({ titulo, cargando, sinDatos, children }) {
     <section className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
       <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">{titulo}</h2>
       {cargando ? (
-        <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <div className="py-4">
+          <Skeleton className="h-48 w-full" />
+        </div>
       ) : sinDatos ? (
         <p className="py-10 text-center text-sm text-slate-400 dark:text-slate-500">Sin datos en el período seleccionado.</p>
       ) : (

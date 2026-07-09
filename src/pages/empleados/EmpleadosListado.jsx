@@ -5,6 +5,7 @@ import Modal from '../../components/Modal';
 import FormEmpleado, { CARGOS } from '../../components/empleados/FormEmpleado';
 import { IconEditar, IconFiltro } from '../../components/icons';
 import { formatearMoneda } from '../../utils/moneda';
+import { SkeletonListado } from '../../components/common/Skeleton';
 
 const CAMPO_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
@@ -213,7 +214,7 @@ export default function EmpleadosListado() {
       </div>
 
       {loading ? (
-        <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonListado />
       ) : error ? (
         <p className="p-6 text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : activos.length === 0 && inactivos.length === 0 ? (

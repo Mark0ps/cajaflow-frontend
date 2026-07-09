@@ -8,6 +8,7 @@ import EstadoCuentaTab from '../../components/empleados/EstadoCuentaTab';
 import PrestamosTab from '../../components/empleados/PrestamosTab';
 import ValesTab from '../../components/empleados/ValesTab';
 import { formatearMoneda } from '../../utils/moneda';
+import { SkeletonDetalle } from '../../components/common/Skeleton';
 
 const TABS = [
   { id: 'estado-cuenta', label: 'Estado de cuenta' },
@@ -46,7 +47,7 @@ export default function EmpleadoDetalle() {
   }
 
   if (loading) {
-    return <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <SkeletonDetalle />;
   }
 
   if (error || !empleado) {

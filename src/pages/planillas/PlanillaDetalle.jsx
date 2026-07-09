@@ -8,6 +8,7 @@ import ChecklistEmpleados from '../../components/planillas/ChecklistEmpleados';
 import EmpleadoPlanillaCard from '../../components/planillas/EmpleadoPlanillaCard';
 import { IconCandado, IconDesbloquear, IconEliminar, IconUsuarios } from '../../components/icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
+import { SkeletonCardGrid, SkeletonDetalle } from '../../components/common/Skeleton';
 
 function ModalEditarEmpleados({ open, onClose, planilla, onActualizada }) {
   const [empleados, setEmpleados] = useState([]);
@@ -155,7 +156,12 @@ export default function PlanillaDetalle() {
   }
 
   if (loading) {
-    return <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return (
+      <div className="space-y-4">
+        <SkeletonDetalle />
+        <SkeletonCardGrid cantidad={4} />
+      </div>
+    );
   }
 
   if (error && !planilla) {

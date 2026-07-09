@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import ModalCompletarFactura from '../../components/gastos/ModalCompletarFactura';
 import { formatearFechaLarga, formatearMoneda } from '../../utils/moneda';
+import { SkeletonTabla } from '../../components/common/Skeleton';
 
 /**
  * Gastos cuyo N° de factura quedó pendiente (de cierres de caja o externos).
@@ -39,7 +40,7 @@ export default function FacturasPendientes() {
       <h1 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Facturas pendientes</h1>
 
       {loading ? (
-        <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+        <SkeletonTabla />
       ) : error ? (
         <p className="p-6 text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : gastos.length === 0 ? (

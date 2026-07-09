@@ -4,6 +4,7 @@ import { extraerMensajeError } from '../../api/errores';
 import FormPrestamo from './FormPrestamo';
 import Modal from '../Modal';
 import { formatearMoneda } from '../../utils/moneda';
+import { SkeletonLineas } from '../common/Skeleton';
 
 export default function PrestamosTab({ empleadoId }) {
   const [prestamos, setPrestamos] = useState([]);
@@ -38,7 +39,7 @@ export default function PrestamosTab({ empleadoId }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <SkeletonLineas lineas={4} />;
   }
 
   if (error) {

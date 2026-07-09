@@ -4,6 +4,7 @@ import Modal from '../../components/Modal';
 import StatTile from '../../components/common/StatTile';
 import FormPrestamo from '../../components/empleados/FormPrestamo';
 import { formatearMoneda } from '../../utils/moneda';
+import { SkeletonLineas } from '../../components/common/Skeleton';
 
 const ESTADO_PRESTAMO_ESTILOS = {
   activo: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
@@ -141,7 +142,9 @@ export default function PrestamosListado() {
 
       <div className="overflow-x-auto rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)]">
         {loading ? (
-          <p className="p-6 text-sm text-slate-500 dark:text-slate-400">Cargando...</p>
+          <div className="p-4">
+            <SkeletonLineas lineas={5} />
+          </div>
         ) : prestamos.length === 0 ? (
           <p className="p-6 text-sm text-slate-400 dark:text-slate-500">No hay préstamos que coincidan con los filtros.</p>
         ) : (

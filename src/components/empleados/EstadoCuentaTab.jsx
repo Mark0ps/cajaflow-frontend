@@ -6,6 +6,7 @@ import NumberInput from '../common/NumberInput';
 import { IconCamara, IconSubir, IconCheck } from '../icons';
 import { formatearMoneda, NOMBRES_MESES } from '../../utils/moneda';
 import { comprimirImagen } from '../../utils/comprimirImagen';
+import { SkeletonLineas } from '../common/Skeleton';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
 
@@ -125,7 +126,7 @@ export default function EstadoCuentaTab({ empleadoId }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-500 dark:text-slate-400">Cargando...</p>;
+    return <SkeletonLineas lineas={4} />;
   }
 
   if (error) {
