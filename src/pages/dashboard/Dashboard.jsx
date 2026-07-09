@@ -173,10 +173,10 @@ export default function Dashboard() {
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
       )}
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatTile label="Ingresos del mes" valor={formatearMoneda(totalIngresos)} />
         <StatTile label="Gastos de caja" valor={formatearMoneda(totalGastos)} />
-        <StatTile label="Total Ventas" valor={formatearMoneda(totalGastos + totalIngresos, 0)} />
+        <StatTile label="Total ventas" valor={formatearMoneda(totalGastos + totalIngresos)} />
         <StatTile
           label="Diferencia acumulada"
           valor={formatearMoneda(totalDiferencia)}
@@ -184,12 +184,6 @@ export default function Dashboard() {
           className={claseDiferencia(totalDiferencia)}
         />
         <StatTile label="Días con actividad" valor={diasConCierres} detalle={`de ${dias.length} días`} />
-        <StatTile
-          label="Total Ventas"
-          valor={formatearMoneda(totalGastos + totalIngresos, 0)}
-          detalle={`+ ${formatearMoneda(totalIngresos)} ingresos` }
-          className={claseDiferencia(totalDiferencia)}
-        />
       </div>
       
       <div className="rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-3">
