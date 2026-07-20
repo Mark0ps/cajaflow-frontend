@@ -6,6 +6,7 @@ import NumberInput from '../common/NumberInput';
 import { IconCamara, IconSubir, IconCheck } from '../icons';
 import { fechaLocalHoy } from '../../utils/moneda';
 import { comprimirImagen } from '../../utils/comprimirImagen';
+import usePegarImagen from '../../hooks/usePegarImagen';
 
 const METODOS = ['efectivo', 'transferencia', 'cheque'];
 
@@ -35,10 +36,16 @@ export default function ModalRegistrarPago({ open, onClose, detalle, onRegistrad
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, detalle.id]);
 
-  async function handleArchivoSeleccionado(event) {
-    const file = event.target.files?.[0] ?? null;
-    setComprobante(file ? await comprimirImagen(file) : null);
+  async function procesarArchivo(original) {
+    setComprobante(original ? await comprimirImagen(original) : null);
   }
+
+  async function handleArchivoSeleccionado(event) {
+    await procesarArchivo(event.target.files?.[0] ?? null);
+  }
+
+  // Tercera opción silenciosa junto a cámara/galería, solo en desktop.
+  usePegarImagen({ habilitado: open, onImagenPegada: procesarArchivo });
 
   function quitarComprobante() {
     setComprobante(null);
@@ -178,6 +185,10 @@ export default function ModalRegistrarPago({ open, onClose, detalle, onRegistrad
               Subir archivo
             </button>
           </div>
+
+          <p className="mt-1.5 hidden text-xs text-slate-400 md:block dark:text-slate-500">
+            También puedes pegar una imagen con Ctrl+V.
+          </p>
 
           {comprobante && (
             <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">

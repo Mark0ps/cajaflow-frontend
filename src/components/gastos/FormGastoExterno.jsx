@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
 import NumberInput from '../common/NumberInput';
+import { IconCamara, IconCheck, IconSubir } from '../icons';
 import { fechaLocalHoy, formatearFechaLarga, formatearMoneda } from '../../utils/moneda';
+import { comprimirImagen } from '../../utils/comprimirImagen';
+import usePegarImagen from '../../hooks/usePegarImagen';
 
 const TIPOS_PAGO = ['efectivo', 'tarjeta', 'transferencia', 'cheque'];
 const CATEGORIAS = [
   { value: 'gasto_operativo', label: 'Gasto operativo' },
   { value: 'pago_tarjeta_credito', label: 'Pago de tarjeta de crédito' },
+  { value: 'servicios_publicos', label: 'Servicios públicos / Gastos fijos' },
 ];
 
 const INPUT_CLASES =
@@ -29,9 +33,44 @@ export default function FormGastoExterno({ gasto = null, onGuardado, onCancelar 
   const [categoria, setCategoria] = useState('gasto_operativo');
   const [valor, setValor] = useState('');
   const [facturaSimilar, setFacturaSimilar] = useState(null);
+  const [comprobante, setComprobante] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [comprobanteExistente, setComprobanteExistente] = useState(null);
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const inputCamaraRef = useRef(null);
+  const inputArchivoRef = useRef(null);
+
+  async function procesarArchivo(original) {
+    setComprobante(original ? await comprimirImagen(original) : null);
+  }
+
+  async function handleArchivoSeleccionado(event) {
+    await procesarArchivo(event.target.files?.[0] ?? null);
+  }
+
+  // Tercera opción silenciosa junto a cámara/galería, solo en desktop.
+  usePegarImagen({ onImagenPegada: procesarArchivo });
+
+  function quitarComprobante() {
+    setComprobante(null);
+    if (inputCamaraRef.current) inputCamaraRef.current.value = '';
+    if (inputArchivoRef.current) inputArchivoRef.current.value = '';
+  }
+
+  useEffect(() => {
+    if (!comprobante || !comprobante.type?.startsWith('image/')) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(comprobante);
+    setPreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [comprobante]);
 
   useEffect(() => {
     if (!gasto) return;
@@ -50,6 +89,7 @@ export default function FormGastoExterno({ gasto = null, onGuardado, onCancelar 
     setTipoPago(gasto.tipo_pago ?? 'efectivo');
     setCategoria(gasto.categoria ?? 'gasto_operativo');
     setValor(String(gasto.valor ?? ''));
+    setComprobanteExistente(gasto.comprobante_url ?? null);
     // Solo se precarga una vez, al entrar en modo edición de este gasto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gasto?.id]);
@@ -122,24 +162,25 @@ export default function FormGastoExterno({ gasto = null, onGuardado, onCancelar 
 
     setSubmitting(true);
 
-    const datosProveedor = proveedor.id
-      ? { proveedor_id: proveedor.id }
-      : { proveedor_nombre_libre: proveedor.nombre };
-
-    const payload = {
-      ...datosProveedor,
-      fecha_emision: fechaEmision,
-      descripcion: descripcion || null,
-      numero_factura: numeroFactura || null,
-      tipo_pago: tipoPago,
-      categoria,
-      valor,
-    };
+    const formData = new FormData();
+    if (proveedor.id) formData.append('proveedor_id', proveedor.id);
+    else formData.append('proveedor_nombre_libre', proveedor.nombre);
+    formData.append('fecha_emision', fechaEmision);
+    if (descripcion) formData.append('descripcion', descripcion);
+    if (numeroFactura) formData.append('numero_factura', numeroFactura);
+    formData.append('tipo_pago', tipoPago);
+    formData.append('categoria', categoria);
+    formData.append('valor', valor);
+    if (comprobante) formData.append('comprobante', comprobante);
+    // El navegador no puede enviar PATCH con multipart/form-data (PHP no
+    // parsea $_FILES fuera de POST) — se manda POST con el override que
+    // Laravel ya reconoce, misma solución documentada para subir archivos.
+    if (editando) formData.append('_method', 'PATCH');
 
     try {
       const { data } = editando
-        ? await api.patch(`/gastos/${gasto.id}`, payload)
-        : await api.post('/gastos/externos', payload);
+        ? await api.post(`/gastos/${gasto.id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : await api.post('/gastos/externos', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
       onGuardado(data);
     } catch (err) {
@@ -310,6 +351,86 @@ export default function FormGastoExterno({ gasto = null, onGuardado, onCancelar 
           {formatearFechaLarga(facturaSimilar.fecha)}, {formatearMoneda(facturaSimilar.valor)}.
         </p>
       )}
+
+      <div className="mb-4">
+        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-slate-400">Comprobante (opcional)</label>
+
+        <input
+          ref={inputCamaraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleArchivoSeleccionado}
+          className="hidden"
+        />
+        <input
+          ref={inputArchivoRef}
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={handleArchivoSeleccionado}
+          className="hidden"
+        />
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => inputCamaraRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <IconCamara className="h-4 w-4" />
+            Tomar foto
+          </button>
+          <button
+            type="button"
+            onClick={() => inputArchivoRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <IconSubir className="h-4 w-4" />
+            Subir archivo
+          </button>
+        </div>
+
+        <p className="mt-1.5 hidden text-xs text-slate-400 md:block dark:text-slate-500">
+          También puedes pegar una imagen con Ctrl+V.
+        </p>
+
+        {comprobante && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Vista previa del comprobante"
+                className="h-12 w-12 rounded border-[0.5px] border-[var(--border)] object-cover"
+              />
+            ) : (
+              <span className="rounded border-[0.5px] border-[var(--border)] px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                PDF
+              </span>
+            )}
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+              <IconCheck className="h-4 w-4" />
+              Listo para subir
+            </span>
+            <button
+              type="button"
+              onClick={quitarComprobante}
+              className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+            >
+              Quitar
+            </button>
+          </div>
+        )}
+
+        {!comprobante && comprobanteExistente && (
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Ya tiene un comprobante —{' '}
+            <a href={comprobanteExistente} target="_blank" rel="noreferrer" className="text-slate-700 underline dark:text-slate-200">
+              verlo
+            </a>
+            . Sube uno nuevo para reemplazarlo.
+          </p>
+        )}
+      </div>
 
       <div className="flex items-center gap-2">
         <button

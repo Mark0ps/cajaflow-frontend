@@ -27,6 +27,11 @@ function GastoExternoCard({ gasto, onEditar, onEliminar }) {
               Tarjeta de crédito
             </span>
           )}
+          {gasto.categoria === 'servicios_publicos' && (
+            <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+              Servicios públicos
+            </span>
+          )}
         </div>
         <p className="truncate text-xs text-slate-500 dark:text-slate-400">
           Emitido: {formatearFechaCorta(gasto.fecha_emision)}
@@ -34,6 +39,14 @@ function GastoExternoCard({ gasto, onEditar, onEliminar }) {
           {gasto.descripcion ? ` · ${gasto.descripcion}` : ''}
           {' · '}
           <span className="capitalize">{gasto.tipo_pago}</span>
+          {gasto.comprobante_url && (
+            <>
+              {' · '}
+              <a href={gasto.comprobante_url} target="_blank" rel="noreferrer" className="text-slate-600 underline dark:text-slate-300">
+                Ver comprobante
+              </a>
+            </>
+          )}
         </p>
       </div>
 
@@ -307,6 +320,7 @@ export default function GastosExternos() {
               <option value="">Todas las categorías</option>
               <option value="gasto_operativo">Gasto operativo</option>
               <option value="pago_tarjeta_credito">Pago de tarjeta de crédito</option>
+              <option value="servicios_publicos">Servicios públicos / Gastos fijos</option>
             </select>
 
             <select

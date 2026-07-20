@@ -8,7 +8,11 @@ import { IconDescargar } from '../icons';
  * o lo comparte directo por Web Share API si el navegador lo soporta
  * (típicamente móvil). No incluye las fotos del turno, son cosas separadas.
  */
-export default function BotonDescargarResumen({ cierre }) {
+export default function BotonDescargarResumen({
+  cierre,
+  label = 'Descargar resumen',
+  className = 'flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800',
+}) {
   const contenedorRef = useRef(null);
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState('');
@@ -61,14 +65,9 @@ export default function BotonDescargarResumen({ cierre }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={descargar}
-        disabled={generando}
-        className="flex items-center gap-1.5 rounded-lg border-[0.5px] border-[var(--border)] px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
-      >
+      <button type="button" onClick={descargar} disabled={generando} className={className}>
         <IconDescargar className="h-4 w-4" />
-        {generando ? 'Generando...' : 'Descargar resumen'}
+        {generando ? 'Generando...' : label}
       </button>
 
       {error && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>}

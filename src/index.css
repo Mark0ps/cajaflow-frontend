@@ -26,6 +26,43 @@
   }
 }
 
+/* Modal de cierre exitoso (ver ModalCierreExitoso.jsx) — pop del círculo +
+   trazo del check dibujándose, ~400ms total (150ms delay + 250ms trazo). */
+@keyframes cierre-check-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cierre-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes cierre-modal-in {
+  from {
+    transform: scale(0.96) translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --surface-1: #020617;

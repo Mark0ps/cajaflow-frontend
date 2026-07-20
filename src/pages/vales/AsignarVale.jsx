@@ -6,6 +6,7 @@ import NumberInput from '../../components/common/NumberInput';
 import { IconCamara, IconCheck, IconSubir } from '../../components/icons';
 import { fechaLocalHoy } from '../../utils/moneda';
 import { comprimirImagen } from '../../utils/comprimirImagen';
+import usePegarImagen from '../../hooks/usePegarImagen';
 
 const SELECT_CLASES =
   'w-full rounded-lg border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none dark:text-slate-100 dark:focus:border-slate-400';
@@ -37,12 +38,18 @@ export default function AsignarVale() {
       .catch(() => setEmpleados([]));
   }, []);
 
+  async function procesarArchivo(original) {
+    setComprobante(original ? await comprimirImagen(original) : null);
+  }
+
   // Dos inputs separados (cámara vs. galería): mezclar accept imagen+PDF en
   // un solo input esconde la opción de cámara en navegadores móviles.
   async function handleArchivoSeleccionado(event) {
-    const file = event.target.files?.[0] ?? null;
-    setComprobante(file ? await comprimirImagen(file) : null);
+    await procesarArchivo(event.target.files?.[0] ?? null);
   }
+
+  // Tercera opción silenciosa junto a cámara/galería, solo en desktop.
+  usePegarImagen({ onImagenPegada: procesarArchivo });
 
   function quitarComprobante() {
     setComprobante(null);
@@ -215,6 +222,10 @@ export default function AsignarVale() {
                 Subir archivo
               </button>
             </div>
+
+            <p className="mt-1.5 hidden text-xs text-slate-400 md:block dark:text-slate-500">
+              También puedes pegar una imagen con Ctrl+V.
+            </p>
 
             {comprobante && (
               <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">

@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { extraerMensajeError } from '../../api/errores';
+import { useAuth } from '../../context/AuthContext';
 import { formatearMoneda } from '../../utils/moneda';
+import ModalCierreExitoso from './ModalCierreExitoso';
 
 function FilaDesglose({ operador, label, valor, resaltado, className = '' }) {
   return (
@@ -32,8 +35,11 @@ function FilaDesglose({ operador, label, valor, resaltado, className = '' }) {
 }
 
 export default function ResumenCierre({ cierre, editable, onGuardado }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [error, setError] = useState('');
   const [cerrando, setCerrando] = useState(false);
+  const [cierreCerrado, setCierreCerrado] = useState(null);
 
   const efectivo = Number(cierre.efectivo ?? 0);
   const totalGastos = Number(cierre.total_gastos ?? 0);
@@ -66,12 +72,30 @@ export default function ResumenCierre({ cierre, editable, onGuardado }) {
 
     try {
       await api.post(`/cierres-caja/${cierre.id}/cerrar`);
-      await onGuardado();
+      const actualizado = await onGuardado();
+      setCierreCerrado(actualizado ?? { ...cierre, estado: 'cerrado' });
     } catch (err) {
       setError(extraerMensajeError(err));
     } finally {
       setCerrando(false);
     }
+  }
+
+  // Solo admin/secretaria tienen acceso a /caja/:id (ver ProtectedRoute) —
+  // un cajero ya está viendo el detalle completo en esta misma pantalla
+  // (PanelTrabajo queda en modo solo-lectura apenas el cierre se cierra).
+  const puedeVerDetalle = user?.role === 'admin' || user?.role === 'secretaria';
+
+  function handleVerDetalle() {
+    if (puedeVerDetalle && cierreCerrado) {
+      navigate(`/caja/${cierreCerrado.id}`);
+    }
+    setCierreCerrado(null);
+  }
+
+  function handleVolverInicio() {
+    setCierreCerrado(null);
+    navigate('/');
   }
 
   return (
@@ -134,6 +158,14 @@ export default function ResumenCierre({ cierre, editable, onGuardado }) {
           Turno {cierre.estado === 'revisado_secretaria' ? 'revisado' : cierre.estado}
         </p>
       )}
+
+      <ModalCierreExitoso
+        open={cierreCerrado !== null}
+        cierre={cierreCerrado}
+        onVerDetalle={handleVerDetalle}
+        onVolverInicio={handleVolverInicio}
+        onClose={() => setCierreCerrado(null)}
+      />
     </section>
   );
 }

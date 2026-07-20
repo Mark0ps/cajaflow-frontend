@@ -12,9 +12,23 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../api/axios';
+import { extraerMensajeError } from '../../api/errores';
+import Modal from '../../components/Modal';
 import StatTile from '../../components/common/StatTile';
 import { Skeleton } from '../../components/common/Skeleton';
+import { IconDescargar } from '../../components/icons';
 import { formatearMoneda } from '../../utils/moneda';
+
+const CATEGORIAS_PDF = [
+  { value: 'gasto_operativo', label: 'Gasto operativo' },
+  { value: 'pago_tarjeta_credito', label: 'Pago de tarjeta de crédito' },
+  { value: 'servicios_publicos', label: 'Servicios públicos / Gastos fijos' },
+];
+
+const FACTURA_NOMINAL_PDF = [
+  { value: 'con', label: 'Con factura nominal' },
+  { value: 'sin', label: 'Sin factura nominal' },
+];
 
 const HOY = new Date();
 
@@ -90,6 +104,83 @@ export default function Reportes() {
   const [vales, setVales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [categoriasPdf, setCategoriasPdf] = useState(CATEGORIAS_PDF.map((item) => item.value));
+  const [facturaNominalPdf, setFacturaNominalPdf] = useState(FACTURA_NOMINAL_PDF.map((item) => item.value));
+  const [exportando, setExportando] = useState(false);
+  const [errorPdf, setErrorPdf] = useState('');
+  const [previewPdfUrl, setPreviewPdfUrl] = useState(null);
+  const [previewPdfNombre, setPreviewPdfNombre] = useState('');
+
+  function alternarCategoriaPdf(valor) {
+    setCategoriasPdf((prev) => (prev.includes(valor) ? prev.filter((item) => item !== valor) : [...prev, valor]));
+  }
+
+  function alternarFacturaNominalPdf(valor) {
+    setFacturaNominalPdf((prev) => (prev.includes(valor) ? prev.filter((item) => item !== valor) : [...prev, valor]));
+  }
+
+  async function exportarPdf() {
+    setErrorPdf('');
+
+    if (categoriasPdf.length === 0) {
+      setErrorPdf('Selecciona al menos una categoría para exportar.');
+      return;
+    }
+
+    setExportando(true);
+
+    try {
+      const { data } = await api.get('/reportes/gastos-externos/pdf', {
+        params: { desde, hasta, categoria: categoriasPdf, factura_nominal: facturaNominalPdf },
+        responseType: 'blob',
+      });
+
+      // Solo se genera la vista previa aquí — la descarga real queda a
+      // decisión del usuario desde el modal, no automática.
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+      setPreviewPdfUrl(url);
+      setPreviewPdfNombre(`reporte-gastos-externos-${desde}-a-${hasta}.pdf`);
+    } catch (err) {
+      // La respuesta de error también llega como blob por el responseType;
+      // hay que leerla como texto/JSON antes de poder mostrar el mensaje.
+      if (err.response?.data instanceof Blob) {
+        try {
+          const texto = await err.response.data.text();
+          err.response.data = JSON.parse(texto);
+        } catch {
+          // deja el blob tal cual si no se pudo parsear
+        }
+      }
+      setErrorPdf(extraerMensajeError(err));
+    } finally {
+      setExportando(false);
+    }
+  }
+
+  function cerrarPreviewPdf() {
+    if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl);
+    setPreviewPdfUrl(null);
+    setPreviewPdfNombre('');
+  }
+
+  function descargarPreviewPdf() {
+    if (!previewPdfUrl) return;
+    const enlace = document.createElement('a');
+    enlace.href = previewPdfUrl;
+    enlace.download = previewPdfNombre;
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+  }
+
+  useEffect(() => {
+    return () => {
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl);
+    };
+    // Solo se limpia al desmontar el componente, no en cada cambio de previewPdfUrl.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!desde || !hasta || desde > hasta) return;
@@ -203,6 +294,7 @@ export default function Reportes() {
               <option value="">Todas</option>
               <option value="gasto_operativo">Gasto operativo</option>
               <option value="pago_tarjeta_credito">Pago de tarjeta de crédito</option>
+              <option value="servicios_publicos">Servicios públicos / Gastos fijos</option>
             </select>
           </div>
         </div>
@@ -212,6 +304,90 @@ export default function Reportes() {
         <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">{error}</p>
       )}
 
+      <div className="mb-4 rounded-xl border-[0.5px] border-[var(--border)] bg-[var(--surface-2)] p-4">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Exportar reporte de gastos externos a PDF</h2>
+
+        <div className="flex flex-wrap items-start gap-6">
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">Categoría</p>
+            <div className="flex flex-col gap-1">
+              {CATEGORIAS_PDF.map((item) => (
+                <label key={item.value} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={categoriasPdf.includes(item.value)}
+                    onChange={() => alternarCategoriaPdf(item.value)}
+                    className="h-3.5 w-3.5 rounded border-[var(--border)]"
+                  />
+                  {item.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">Factura nominal</p>
+            <div className="flex flex-col gap-1">
+              {FACTURA_NOMINAL_PDF.map((item) => (
+                <label key={item.value} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={facturaNominalPdf.includes(item.value)}
+                    onChange={() => alternarFacturaNominalPdf(item.value)}
+                    className="h-3.5 w-3.5 rounded border-[var(--border)]"
+                  />
+                  {item.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="ml-auto self-end">
+            <button
+              type="button"
+              onClick={exportarPdf}
+              disabled={exportando}
+              className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50 dark:bg-slate-700 dark:hover:bg-slate-600"
+            >
+              <IconDescargar className="h-4 w-4" />
+              {exportando ? 'Generando...' : 'Exportar PDF'}
+            </button>
+          </div>
+        </div>
+
+        {errorPdf && (
+          <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950 dark:text-red-400">{errorPdf}</p>
+        )}
+      </div>
+
+      <Modal open={!!previewPdfUrl} onClose={cerrarPreviewPdf} title="Vista previa del reporte" maxWidth="max-w-4xl">
+        <div className="mb-4 h-[75vh] overflow-hidden rounded-lg border-[0.5px] border-[var(--border)]">
+          {previewPdfUrl && (
+            <iframe src={previewPdfUrl} title="Vista previa del PDF" className="h-full w-full" />
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={cerrarPreviewPdf}
+            className="rounded-lg border-[0.5px] border-[var(--border)] px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            Cerrar
+          </button>
+          <button
+            type="button"
+            onClick={descargarPreviewPdf}
+            className="flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+          >
+            <IconDescargar className="h-4 w-4" />
+            Descargar
+          </button>
+        </div>
+      </Modal>
+
+
+
+      {/*Tarjetas con info*/}    
       {balance && (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatTile label="Ingresos del período" valor={formatearMoneda(balance.total_ingresos)} />

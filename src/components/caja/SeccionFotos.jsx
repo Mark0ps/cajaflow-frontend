@@ -4,6 +4,7 @@ import { extraerMensajeError } from '../../api/errores';
 import ModalMotivo from '../common/ModalMotivo';
 import LightboxFoto from '../common/LightboxFoto';
 import { comprimirImagen } from '../../utils/comprimirImagen';
+import usePegarImagen from '../../hooks/usePegarImagen';
 import { IconCamara, IconSubir, IconEliminar } from '../icons';
 
 /**
@@ -64,10 +65,7 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
     }
   }
 
-  async function handleArchivoSeleccionado(event) {
-    const original = event.target.files?.[0];
-    event.target.value = ''; // permite volver a elegir el mismo archivo después
-
+  async function procesarArchivo(original) {
     if (!original) return;
 
     const file = await comprimirImagen(original);
@@ -78,6 +76,15 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
       subirArchivo(file, null);
     }
   }
+
+  async function handleArchivoSeleccionado(event) {
+    const original = event.target.files?.[0];
+    event.target.value = ''; // permite volver a elegir el mismo archivo después
+    await procesarArchivo(original);
+  }
+
+  // Tercera opción silenciosa junto a cámara/galería, solo en desktop.
+  usePegarImagen({ habilitado: editable, onImagenPegada: procesarArchivo });
 
   async function handleEliminar(foto) {
     if (requerirMotivo) {
@@ -154,6 +161,10 @@ export default function SeccionFotos({ cierre, editable, requerirMotivo = false,
               Subir archivo
             </button>
           </div>
+
+          <p className="mb-3 hidden text-xs text-slate-400 md:block dark:text-slate-500">
+            También puedes pegar una imagen con Ctrl+V.
+          </p>
 
           {subiendo && previewUrl && (
             <div className="mb-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

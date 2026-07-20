@@ -46,6 +46,7 @@ export default function MiCaja() {
     if (!id) return;
     const { data } = await api.get(`/cierres-caja/${id}`);
     setCierre(data);
+    return data;
   }
 
   if (loading) {
